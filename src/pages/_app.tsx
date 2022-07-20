@@ -4,9 +4,15 @@ import type { AppRouter } from "../server/router";
 import type { AppType } from "next/dist/shared/lib/utils";
 import superjson from "superjson";
 import "../styles/globals.css";
+import {SessionProvider} from "next-auth/react";
 
 const MyApp: AppType = ({ Component, pageProps }) => {
-  return <Component {...pageProps} />;
+
+  return (
+      <SessionProvider session={pageProps.session} refetchInterval={0}>
+        <Component {...pageProps} />
+      </SessionProvider>
+  );
 };
 
 const getBaseUrl = () => {
