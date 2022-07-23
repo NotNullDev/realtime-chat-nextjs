@@ -1,15 +1,14 @@
 import {Message} from "@prisma/client";
 import type {NextPage} from "next";
-import {
-    createRef,
-    useEffect,
-} from "react";
+import {createRef, useEffect, useMemo, useRef, useState} from "react";
 import SingleMessage from "../components/singleMessage";
 import {trpc} from "../utils/trpc";
-import {signIn, useSession} from "next-auth/react";
 import {TRPCContextState} from "@trpc/react/src/internals/context";
 import {AppRouter} from "../server/router";
 import AppHeader from "../components/AppHeader";
+import {useSession} from "next-auth/react";
+import {connect, io} from 'socket.io-client';
+import {appWs, numberOfRenders} from "./_app";
 
 export type ChatMessage = {
     author: string;
@@ -17,19 +16,71 @@ export type ChatMessage = {
     timestamp: Date;
 };
 
+function createSocketIoClient(url: string) {
+    return connect('http://localhost:3333');
+}
+
 function ChatComponent({trpcContext}: { trpcContext: any }) {
 
     const msgBox = createRef<HTMLDivElement>();
+
+    const ourWs = useMemo(() => new WebSocket(`ws://localhost:3333`), []);
+
+    const socketIoClient = useMemo(() => createSocketIoClient(process.env.WS_URI ?? ""), []);
+
+    socketIoClient.on('connect', () => {
+        console.log('connected to socketIO');
+    });
+
+    socketIoClient.on('publishMessage', (message: Message) => {
+        console.log('newMessage', message);
+    });
+
+    // const wSockNoServ = useMemo(() => new WebSocketServer({
+    //     noServer: true,
+    //     port: 3333
+    // }),[]);
+
+    // wSockNoServ.on('connection', (ws) => {
+    //     console.log('ws connected');
+    // });
+
+
+    ourWs.addEventListener('open', () => {
+        ourWs.send('hello');
+    });
+
+    ourWs?.addEventListener('message', (event: any) => {
+        console.log('received message: ', event)
+        setMessages((currentMessages) => [...currentMessages, JSON.parse(event.data)]);
+    });
+
+    const [messages, setMessages] = useState<Message[]>([]);
+    //
+    // trpc.useSubscription(['wsClientnewMessage'], {
+    //     onNext: (message: any) => {
+    //         console.log(message)
+    //         // setMessages([...messages, message]);
+    //         scrollIntoView(msgBox);
+    //     },
+    //     onError: (error: any) => {
+    //         console.error(error);
+    //         errorHandler();
+    //         trpc.useContext().queryClient.invalidateQueries();
+    //     }
+    // });
 
     useEffect(() => {
         scrollIntoView(msgBox);
     }, [msgBox]);
 
-    const messagesQuery = trpc.useQuery(["example.getAll"]);
+    //const messagesQuery = trpc.useQuery(["example.getAll"]);
     const messageMutation = trpc.useMutation("example.addMessage");
     const deleteAllMsgMutation = trpc.useMutation("example.deleteAll");
 
-    const clearMessages = (trpcContextState: TRPCContextState<AppRouter, unknown>) => {
+    const clearMessages = (
+        trpcContextState: TRPCContextState<AppRouter, unknown>
+    ) => {
         deleteAllMsgMutation.mutateAsync(null, {
             onSuccess: () => {
                 alert("OMG WHERE ARE ALL THE MESSAGES? 🤔");
@@ -39,12 +90,10 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
         });
     };
 
-    const messages = messagesQuery.data;
-
+    //const messages = messagesQuery.data;
     const {data: session} = useSession();
 
     const messageTextChangeHandler = (e: any) => {
-        console.log(typeof e);
 
         if (e.key.toLowerCase() !== "enter") {
             return;
@@ -67,7 +116,7 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
     };
 
     if (messages === undefined) {
-        return <div>Error reading messages from databases.</div>
+        return <div>Error reading messages from databases.</div>;
     }
 
     return (
@@ -76,7 +125,7 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
                 className="w-[40vw] h-[40vh] border-black border-2 rounded p-3 flex flex-col overflow-y-scroll"
                 id="messages"
             >
-                {messages.map((message) => (
+                {messages.map((message: any) => (
                     <SingleMessage
                         message={message}
                         key={message.id.valueOf() as unknown as number}
@@ -97,10 +146,8 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
 }
 
 const SingInComponent = () => {
-    return (
-        <div className="p-3">You are not logged in!</div>
-    )
-}
+    return <div className="p-3">You are not logged in!</div>;
+};
 
 const scrollIntoView = (element: any) => {
     element.current?.scrollIntoView({behavior: "smooth"});
@@ -115,7 +162,7 @@ const Home: NextPage = () => {
 
     const trpcContextState = trpc.useContext();
 
-    if (status === 'loading') {
+    if (status === "loading") {
         return <div>Loading...</div>;
     }
 
@@ -124,12 +171,13 @@ const Home: NextPage = () => {
             <div className="grid place-items-center h-[100vh] bg-indigo-500">
                 <div>
                     <AppHeader/>
+                    <div>Number of renders _app: {numberOfRenders}</div>
                     <div className="grid place-items-center">
-                        {
-                            session ?
-                                <ChatComponent trpcContext={trpcContextState}/> :
-                                <SingInComponent/>
-                        }
+                        {session ? (
+                            <ChatComponent trpcContext={trpcContextState}/>
+                        ) : (
+                            <SingInComponent/>
+                        )}
                     </div>
                 </div>
             </div>

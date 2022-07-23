@@ -1,7 +1,10 @@
 import { createRouter } from "./context";
 import { z }  from 'zod'
-import { ChatMessage } from "../../pages/index";
+
 import { Message } from "@prisma/client";
+import { appWs } from "../../pages/_app";
+import {rawWss} from "../rawWsServer";
+import {socketIoServer} from "../socketIoServer";
 
 export const exampleRouter = createRouter()
   .query("hello", {
@@ -34,12 +37,16 @@ export const exampleRouter = createRouter()
         return null;
       }
 
-      return await ctx.prisma.message.create({
+      const createdMessage: Message = await ctx.prisma.message.create({
         data: {
           author: message.author,
           content: message.content,
         }
       });
+
+      socketIoServer.emit('publishMessage', createdMessage);
+
+      return createdMessage;
     }
   })
   .mutation("deleteAll", {
