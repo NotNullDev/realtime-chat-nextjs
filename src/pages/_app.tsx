@@ -4,16 +4,16 @@ import type { AppRouter } from "../server/router";
 import type { AppType } from "next/dist/shared/lib/utils";
 import superjson from "superjson";
 import "../styles/globals.css";
-import {SessionProvider} from "next-auth/react";
-
+import { SessionProvider } from "next-auth/react";
 
 export let appWs: WebSocket | null = null;
-if (!appWs && typeof window !== "undefined") {
-    appWs = new WebSocket(`ws://localhost:3333`);
-    appWs.addEventListener('open', () => {
-    console.log('appWs is open');
-  });
-}
+
+// if (!appWs && typeof window !== "undefined") {
+//     appWs = new WebSocket(`ws://localhost:3333`);
+//     appWs.addEventListener('open', () => {
+//     console.log('appWs is open');
+//   });
+// }
 
 export let numberOfRenders = 0;
 numberOfRenders++;

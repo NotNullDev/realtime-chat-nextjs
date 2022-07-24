@@ -1,30 +1,28 @@
 import {Message} from "@prisma/client";
 import type {NextPage} from "next";
-import {createRef, useEffect, useMemo, useRef, useState} from "react";
+import {createRef, useEffect, useMemo, useState} from "react";
 import SingleMessage from "../components/singleMessage";
 import {trpc} from "../utils/trpc";
 import {TRPCContextState} from "@trpc/react/src/internals/context";
 import {AppRouter} from "../server/router";
 import AppHeader from "../components/AppHeader";
 import {useSession} from "next-auth/react";
-import {connect, io} from 'socket.io-client';
-import {appWs, numberOfRenders} from "./_app";
-
-export type ChatMessage = {
-    author: string;
-    content: string;
-    timestamp: Date;
-};
+import {io} from 'socket.io-client';
+import {numberOfRenders} from "./_app";
 
 function createSocketIoClient(url: string) {
-    return connect('http://localhost:3333');
+    return io();
 }
 
 function ChatComponent({trpcContext}: { trpcContext: any }) {
 
+    const [messages, setMessages] = useState<Message[]>([]);
+
+    //const messages = messagesQuery.data;
+    const {data: session} = useSession();
+
     const msgBox = createRef<HTMLDivElement>();
 
-    const ourWs = useMemo(() => new WebSocket(`ws://localhost:3333`), []);
 
     const socketIoClient = useMemo(() => createSocketIoClient(process.env.WS_URI ?? ""), []);
 
@@ -36,6 +34,9 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
         console.log('newMessage', message);
     });
 
+
+    // const ourWs = useMemo(() => new WebSocket(`ws://localhost:3333`), []);
+
     // const wSockNoServ = useMemo(() => new WebSocketServer({
     //     noServer: true,
     //     port: 3333
@@ -46,16 +47,15 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
     // });
 
 
-    ourWs.addEventListener('open', () => {
-        ourWs.send('hello');
-    });
+    // ourWs.addEventListener('open', () => {
+    //     ourWs.send('hello');
+    // });
+    //
+    // ourWs?.addEventListener('message', (event: any) => {
+    //     console.log('received message: ', event)
+    //     setMessages((currentMessages) => [...currentMessages, JSON.parse(event.data)]);
+    // });
 
-    ourWs?.addEventListener('message', (event: any) => {
-        console.log('received message: ', event)
-        setMessages((currentMessages) => [...currentMessages, JSON.parse(event.data)]);
-    });
-
-    const [messages, setMessages] = useState<Message[]>([]);
     //
     // trpc.useSubscription(['wsClientnewMessage'], {
     //     onNext: (message: any) => {
@@ -90,8 +90,7 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
         });
     };
 
-    //const messages = messagesQuery.data;
-    const {data: session} = useSession();
+
 
     const messageTextChangeHandler = (e: any) => {
 
