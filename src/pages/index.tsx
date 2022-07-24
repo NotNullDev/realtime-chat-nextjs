@@ -10,71 +10,39 @@ import {useSession} from "next-auth/react";
 import {io} from 'socket.io-client';
 import {numberOfRenders} from "./_app";
 
-function createSocketIoClient(url: string) {
-    return io();
-}
-
 function ChatComponent({trpcContext}: { trpcContext: any }) {
 
     const [messages, setMessages] = useState<Message[]>([]);
 
-    //const messages = messagesQuery.data;
     const {data: session} = useSession();
 
     const msgBox = createRef<HTMLDivElement>();
 
+    const socketIoClient = useMemo(() => {
 
-    const socketIoClient = useMemo(() => createSocketIoClient(process.env.WS_URI ?? ""), []);
+        console.log('connecting to ws');
 
-    socketIoClient.on('connect', () => {
-        console.log('connected to socketIO');
+        return io('ws://localhost:3001',{
+            port: 3000
+        })
+    }, []);
+
+    socketIoClient.on('newMessage', (message: Message) => {
+        console.log('new message! :)', message);
+        setMessages(old => [...old, message]);
     });
 
-    socketIoClient.on('publishMessage', (message: Message) => {
-        console.log('newMessage', message);
-    });
 
+    const getAllQuery = trpc.useQuery(['example.getAll']);
 
-    // const ourWs = useMemo(() => new WebSocket(`ws://localhost:3333`), []);
-
-    // const wSockNoServ = useMemo(() => new WebSocketServer({
-    //     noServer: true,
-    //     port: 3333
-    // }),[]);
-
-    // wSockNoServ.on('connection', (ws) => {
-    //     console.log('ws connected');
-    // });
-
-
-    // ourWs.addEventListener('open', () => {
-    //     ourWs.send('hello');
-    // });
-    //
-    // ourWs?.addEventListener('message', (event: any) => {
-    //     console.log('received message: ', event)
-    //     setMessages((currentMessages) => [...currentMessages, JSON.parse(event.data)]);
-    // });
-
-    //
-    // trpc.useSubscription(['wsClientnewMessage'], {
-    //     onNext: (message: any) => {
-    //         console.log(message)
-    //         // setMessages([...messages, message]);
-    //         scrollIntoView(msgBox);
-    //     },
-    //     onError: (error: any) => {
-    //         console.error(error);
-    //         errorHandler();
-    //         trpc.useContext().queryClient.invalidateQueries();
-    //     }
-    // });
 
     useEffect(() => {
         scrollIntoView(msgBox);
-    }, [msgBox]);
+        setMessages(
+            getAllQuery.data
+        )
+    }, [getAllQuery.data, msgBox]);
 
-    //const messagesQuery = trpc.useQuery(["example.getAll"]);
     const messageMutation = trpc.useMutation("example.addMessage");
     const deleteAllMsgMutation = trpc.useMutation("example.deleteAll");
 
@@ -91,18 +59,19 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
     };
 
 
-
     const messageTextChangeHandler = (e: any) => {
 
         if (e.key.toLowerCase() !== "enter") {
             return;
         }
 
+        const message = {
+            author: session?.user?.name ?? "Anonymous",
+            content: e.target.value,
+        };
+
         messageMutation.mutateAsync(
-            {
-                author: session?.user?.name ?? "Anonymous",
-                content: e.target.value,
-            },
+            message,
             {
                 onSuccess: () => {
                     trpcContext.invalidateQueries("example.getAll");
@@ -112,6 +81,7 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
                 onError: () => errorHandler(),
             }
         );
+
     };
 
     if (messages === undefined) {
@@ -140,6 +110,7 @@ function ChatComponent({trpcContext}: { trpcContext: any }) {
             />
             <button onClick={() => clearMessages(trpcContext)}>Clear</button>
             <button onClick={() => scrollIntoView(msgBox)}>Scroll test</button>
+            <button onClick={() => socketIoClient.emit('kickAll')}>Kick all</button>
         </>
     );
 }

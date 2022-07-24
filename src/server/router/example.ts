@@ -3,8 +3,7 @@ import { z }  from 'zod'
 
 import { Message } from "@prisma/client";
 import { appWs } from "../../pages/_app";
-import {rawWss} from "../rawWsServer";
-import {socketIoServer} from "../socketIoServer";
+import {socketIOClient} from "../socketIOClient";
 
 export const exampleRouter = createRouter()
   .query("hello", {
@@ -44,7 +43,8 @@ export const exampleRouter = createRouter()
         }
       });
 
-      socketIoServer.emit('publishMessage', createdMessage);
+      console.log('emmiting message...')
+      socketIOClient.emit('addMessage', createdMessage);
 
       return createdMessage;
     }
