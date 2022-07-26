@@ -3,7 +3,6 @@ import { createRouter } from "./context";
 import superjson from "superjson";
 
 import { exampleRouter } from "./example";
-import { messagesRouter } from "./wsChat";
 import {websocketRouter} from "./myWsChat";
 
 export const appRouter = createRouter()

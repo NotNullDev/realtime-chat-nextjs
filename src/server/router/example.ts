@@ -1,9 +1,8 @@
-import { createRouter } from "./context";
+import { Message } from "@prisma/client";
 import { z }  from 'zod'
 
-import { Message } from "@prisma/client";
-import { appWs } from "../../pages/_app";
-import {socketIOClient} from "../socketIOClient";
+
+import { createRouter } from "./context";
 
 export const exampleRouter = createRouter()
   .query("hello", {
@@ -25,26 +24,24 @@ export const exampleRouter = createRouter()
   })
   .mutation("addMessage", {
     input: z.object({
+      authorId: z.string(),
       content: z.string(),
-      author: z.string()
+
     }),
     async resolve({ctx, input }) {
 
-      const message = input as Message;
-
-      if (!message) {
-        return null;
-      }
-
       const createdMessage: Message = await ctx.prisma.message.create({
         data: {
-          author: message.author,
-          content: message.content,
+          authorId: input.authorId,
+          content: input.content,
         }
       });
 
-      console.log('emmiting message...')
-      socketIOClient.emit('addMessage', createdMessage);
+      console.log('emitting message...')
+
+      await ctx.pusher.trigger("chat", "newMessage", {
+        createdMessage
+      });
 
       return createdMessage;
     }

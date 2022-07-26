@@ -20,9 +20,13 @@ model Role {
 // Prisma tables
 model Message {
   id        String   @id @default(uuid())
-  author    String
+  authorId  String   @default("NOT_ASSIGNED")
   content   String
   createdAt DateTime @default(now())
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@unique([id, authorId])
 }
 
 model Account {
@@ -58,6 +62,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  messages      Message[]
   roles         Role[]
   accounts      Account[]
   sessions      Session[]

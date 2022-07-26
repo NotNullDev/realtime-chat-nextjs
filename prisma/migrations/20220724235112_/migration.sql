@@ -13,7 +13,7 @@ CREATE TABLE "new_Message" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Message_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO "new_Message" ("content", "createdAt", "id", "authorId") SELECT "content", "createdAt", "id", (SELECT id from User where name = Author) FROM "Message";
+INSERT INTO "new_Message" ("content", "createdAt", "id") SELECT "content", "createdAt", "id" FROM "Message";
 DROP TABLE "Message";
 ALTER TABLE "new_Message" RENAME TO "Message";
 CREATE UNIQUE INDEX "Message_id_authorId_key" ON "Message"("id", "authorId");

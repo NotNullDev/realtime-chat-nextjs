@@ -5,6 +5,8 @@ import type { AppType } from "next/dist/shared/lib/utils";
 import superjson from "superjson";
 import "../styles/globals.css";
 import { SessionProvider } from "next-auth/react";
+import AppHeader from "../components/AppHeader";
+import AppFooter from "../components/AppFooter";
 
 export let appWs: WebSocket | null = null;
 
@@ -19,11 +21,14 @@ export let numberOfRenders = 0;
 numberOfRenders++;
 
 const MyApp: AppType = ({ Component, pageProps }) => {
-
   return (
-      <SessionProvider session={pageProps.session} refetchInterval={0}>
+    <SessionProvider session={pageProps.session} refetchInterval={0}>
+      <div className="w-full mx-auto container flex flex-col min-h-screen">
+        <AppHeader />
         <Component {...pageProps} />
-      </SessionProvider>
+        <AppFooter />
+      </div>
+    </SessionProvider>
   );
 };
 
