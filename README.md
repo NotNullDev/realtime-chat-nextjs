@@ -21,7 +21,14 @@ supabase init
 supabase start
 ```
 
+## Used technologies
+- [DaisyUI](https://daisyui.com/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [HeroIcons](https://heroicons.com/)
+- [Prisma](https://www.prisma.io/)
+- [Pusher](https://pusher.com/)
+
 # TODO
 
-- [ ] Add websocket support
+- [x] Add websocket support
 - [ ] Reduce calls to the database (add caching)
