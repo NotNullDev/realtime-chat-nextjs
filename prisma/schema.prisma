@@ -19,14 +19,12 @@ model Role {
 
 // Prisma tables
 model Message {
-  id        String   @id @default(uuid())
+  id        String   @id @unique @default(uuid())
   authorId  String   @default("NOT_ASSIGNED")
   content   String
   createdAt DateTime @default(now())
 
   author User @relation(fields: [authorId], references: [id])
-
-  @@unique([id, authorId])
 }
 
 model Account {

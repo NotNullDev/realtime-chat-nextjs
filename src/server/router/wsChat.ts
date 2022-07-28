@@ -2,13 +2,13 @@
  *
  * This is an example router, you can delete this file and then update `../pages/api/trpc/[trpc].tsx`
  */
-import { Context } from './context';
-import { createRouter } from './context';
+import { Context } from './trpcContext';
+import { createRouter } from './trpcContext';
 import { Message } from '@prisma/client';
 import { Subscription, TRPCError } from '@trpc/server';
 import { EventEmitter } from 'events';
 import { z } from 'zod';
-import { prisma } from '../db/client';
+import { prisma } from '../prisma';
 
 interface MyEvents {
     add: (data: Message) => void;

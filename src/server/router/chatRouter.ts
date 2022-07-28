@@ -1,32 +1,25 @@
 import { Message } from "@prisma/client";
 import { z }  from 'zod'
+import { MessageWithAuthor } from "../../types/prisma";
 
 
-import { createRouter } from "./context";
+import { createRouter } from "./trpcContext";
 
-export const exampleRouter = createRouter()
-  .query("hello", {
-    input: z
-      .object({
-        text: z.string().nullish(),
-      })
-      .nullish(),
-    resolve({ input }) {
-      return {
-        greeting: `Hello ${input?.text ?? "world"}`,
-      };
-    },
-  })
+export const chatMessagesRouter = createRouter()
   .query("getAll", {
     async resolve({ ctx }) {
-      return await ctx.prisma.message.findMany();
+      return await ctx.prisma.message.findMany({
+        include: {
+          author: true
+        }
+      });
     },
   })
+
   .mutation("addMessage", {
     input: z.object({
       authorId: z.string(),
-      content: z.string(),
-
+      content:  z.string(),
     }),
     async resolve({ctx, input }) {
 
@@ -37,16 +30,24 @@ export const exampleRouter = createRouter()
         }
       });
 
-      console.log('emitting message...')
-
-      await ctx.pusher.trigger("chat", "newMessage", {
-        createdMessage
+      const messageWithAuthor: MessageWithAuthor = await ctx.prisma.message.findFirst({
+        where: {
+            id: createdMessage.id
+        },
+        include: {
+          author: true
+        }
       });
 
-      return createdMessage;
+      await ctx.pusher.trigger("chat", "newMessage", {
+        messageWithAuthor
+      });
+
+      return messageWithAuthor;
     }
   })
-  .mutation("deleteAll", {
+
+ .mutation("deleteAll", {
     async resolve({ ctx }) {
       return await ctx.prisma.message.deleteMany({});
     }

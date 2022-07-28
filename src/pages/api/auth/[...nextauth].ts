@@ -1,6 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import { prisma } from "../../../server/db/client"
+import { prisma } from "../../../server/prisma"
 import {PrismaAdapter} from "@next-auth/prisma-adapter";
 
 export const authOptions: NextAuthOptions = {
@@ -18,18 +18,22 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, isNewUser, user }) {
 
-      if ( isNewUser ) {
-        await prisma.user.create({
-          data: {
-            ...user,
-          },
-        })
+      if (isNewUser) {
+        console.log("New user has been created:", user)
       }
 
       return token;
     },
     async session({ session, user }) {
-      session.user = user;
+
+      session = {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id
+        }
+      }
+
       return session;
     }
   },

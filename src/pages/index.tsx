@@ -1,21 +1,26 @@
 import { Message, User } from "@prisma/client";
 import type { NextPage } from "next";
 import { createRef, useEffect, useMemo, useRef, useState } from "react";
-import SingleMessage from "../components/singleMessage";
+import SingleMessage from "../components/SingleMessage";
 import { trpc } from "../utils/trpc";
 import { TRPCContextState } from "@trpc/react/src/internals/context";
 import { AppRouter } from "../server/router";
 import { useSession } from "next-auth/react";
 import Pusher from "pusher-js";
+import {MessageWithAuthor} from "../types/prisma";
 
 // let socketIOClient = io(`ws://localhost:3001`);
 
+export type SyncedMessage = MessageWithAuthor & {
+    isSynced: boolean;
+}
+
 function ChatComponent({ trpcContext }: { trpcContext: any }) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageWithAuthor[]>([]);
 
   const utils = trpc.useContext();
 
-  const getAllQuery = trpc.useQuery(["example.getAll"], {
+  const getAllQuery = trpc.useQuery(["chatMessagesRouter.getAll"], {
     onSuccess: (data) => {
       setMessages(data);
     },
@@ -31,23 +36,29 @@ function ChatComponent({ trpcContext }: { trpcContext: any }) {
   }, [msgBox]);
 
   useEffect(() => {
+
+    if( Pusher.instances.length > 0 ) {
+      console.log('Pusher.instances.length ', Pusher.instances.length);
+      return;
+    }
+
     Pusher.logToConsole = true;
 
-    var pusher = new Pusher("266ceafac0f9727d92b7", {
+    const pusher = new Pusher("266ceafac0f9727d92b7", {
       cluster: "eu",
     });
 
-    var channel = pusher.subscribe("chat");
+    const channel = pusher.subscribe("chat");
     channel.bind("newMessage", function (data) {
       // setMessages((oldMessages) => [...oldMessages, data]);
       console.log("[client] Received message: ", channel);
-      utils.invalidateQueries("example.getAll");
+      utils.invalidateQueries("chatMessagesRouter.getAll");
       scrollIntoView(msgBox);
     });
   }, []);
 
-  const messageMutation = trpc.useMutation("example.addMessage");
-  const deleteAllMsgMutation = trpc.useMutation("example.deleteAll");
+  const messageMutation = trpc.useMutation("chatMessagesRouter.addMessage");
+  const deleteAllMsgMutation = trpc.useMutation("chatMessagesRouter.deleteAll");
 
   const clearMessages = (
     trpcContextState: TRPCContextState<AppRouter, unknown>
@@ -55,7 +66,7 @@ function ChatComponent({ trpcContext }: { trpcContext: any }) {
     deleteAllMsgMutation.mutateAsync(null, {
       onSuccess: () => {
         alert("OMG WHERE ARE ALL THE MESSAGES? 🤔");
-        trpcContextState.invalidateQueries("example.getAll");
+        trpcContextState.invalidateQueries("chatMessagesRouter.getAll");
       },
       onError: () => errorHandler(),
     });
@@ -66,17 +77,22 @@ function ChatComponent({ trpcContext }: { trpcContext: any }) {
       return;
     }
 
-    const currentUser: User = session?.user as User;
+    const currentUserId = session?.user?.id;
+
+    if ( !currentUserId ) {
+      console.log('Current session object: ', session);
+      throw "Error: currentUserId is null";
+    }
 
     const message = {
-      authorId: currentUser.id,
+      authorId: currentUserId,
       content: e.target.value,
     };
 
     messageMutation.mutateAsync(message, {
       onSuccess: () => {
         console.log("[client] Message saved to the database.");
-        // trpcContext.invalidateQueries("example.getAll");
+        // trpcContext.invalidateQueries("chatMessagesRouter.getAll");
         e.target.value = "";
         // msgBox.current?.scrollIntoView({ behavior: "smooth" });
       },
@@ -92,6 +108,10 @@ function ChatComponent({ trpcContext }: { trpcContext: any }) {
     return <div>Error reading messages from database.</div>;
   }
 
+  if (!session?.user) {
+    return <div>You are not logged in.</div>;
+  }
+
   return (
     <>
       <div className="grid place-items-center">
@@ -102,6 +122,7 @@ function ChatComponent({ trpcContext }: { trpcContext: any }) {
           {messages.map((message: any) => (
             <SingleMessage
               message={message}
+              currentUser={session?.user}
               key={message.id.valueOf() as unknown as number}
             />
           ))}
