@@ -37,4 +37,14 @@ supabase start
 # TODO
 
 - [x] Add websocket support
-- [ ] Reduce calls to the database (add caching)
+- [ ] Reduce calls to the database (add caching?)
+- [ ] Message should be added instantly with NOT_SYNC status, then after sync it should be changed to SYNC status
+- [ ] Add heartbeat to the websocket
+- [ ] Add private rooms support
+- [ ] Use planetscale as production database provider
+- [ ] Deploy first version on vercel
+- [ ] Add tests
+
+# Bugs
+- [ ] Textarea is not cleared if you press enter many times
+- [ ] Message is not added to the char randomly (seems like prisma is not committing changes?)
