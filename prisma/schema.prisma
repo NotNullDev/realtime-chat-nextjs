@@ -6,40 +6,39 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./db.sqlite"
-  // url      = env("DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model Role {
   id    Int    @id @default(autoincrement())
-  name  String @unique
+  name  String @unique @db.VarChar(384)
   users User[]
 }
 
 // Prisma tables
 model Message {
   id        String   @id @unique @default(uuid())
-  authorId  String   @default("NOT_ASSIGNED")
-  content   String
+  authorId  String   @default("NOT_ASSIGNED") @db.VarChar(384)
+  content   String   @db.VarChar(384)
   createdAt DateTime @default(now())
 
   author User @relation(fields: [authorId], references: [id])
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  id                String  @id @default(cuid()) @db.VarChar(384)
+  userId            String  @db.VarChar(384)
+  type              String  @db.VarChar(384)
+  provider          String  @db.VarChar(384)
+  providerAccountId String  @db.VarChar(384)
+  refresh_token     String? @db.VarChar(384)
+  access_token      String? @db.VarChar(384)
   expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
+  token_type        String? @db.VarChar(384)
+  scope             String? @db.VarChar(384)
+  id_token          String? @db.VarChar(10000)
+  session_state     String? @db.VarChar(384)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -47,19 +46,19 @@ model Account {
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
+  id           String   @id @default(cuid()) @db.VarChar(384)
+  sessionToken String   @unique @db.VarChar(384)
+  userId       String   @db.VarChar(384)
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
   id            String    @id @default(cuid())
-  name          String?
+  name          String?   @db.VarChar(384)
   email         String?   @unique
   emailVerified DateTime?
-  image         String?
+  image         String?   @db.VarChar(384)
   messages      Message[]
   roles         Role[]
   accounts      Account[]
@@ -67,8 +66,8 @@ model User {
 }
 
 model VerificationToken {
-  identifier String
-  token      String   @unique
+  identifier String   @db.VarChar(384)
+  token      String   @unique @db.VarChar(384)
   expires    DateTime
 
   @@unique([identifier, token])

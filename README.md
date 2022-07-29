@@ -11,9 +11,14 @@ npx prisma generate
 npx prisma migrate dev --create-only
 # edit sql file, then apply
 npx prisma migrate dev
+
+# prisma studio
+npx prisma studio
+
 ```
 
 ## Supabase
+
 ```shell
 # init
 supabase init
@@ -22,6 +27,7 @@ supabase start
 ```
 
 ## Used technologies
+
 - [DaisyUI](https://daisyui.com/)
 - [TailwindCSS](https://tailwindcss.com/)
 - [HeroIcons](https://heroicons.com/)
