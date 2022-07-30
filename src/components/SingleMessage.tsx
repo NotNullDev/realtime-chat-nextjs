@@ -1,14 +1,17 @@
 import {Message, User} from "@prisma/client";
 import { useSession } from "next-auth/react";
 import {MessageWithAuthor} from "../types/prisma";
+import {SyncedMessage} from "./ChatComponent";
 
-const SingleMessage = ({ message, currentUser }: { message: MessageWithAuthor, currentUser: User }) => {
+const SingleMessage = ({ message, currentUser }: { message: SyncedMessage, currentUser: User }) => {
 
   if (!currentUser) {
     return null;
   }
 
-  const now: string = message.createdAt.toLocaleString();
+  const createdAt = message.createdAt;
+
+  const now: string = `${new Date(createdAt).toLocaleDateString()} ${new Date(createdAt).toLocaleTimeString()}`;
 
   const heightInPx = 50;
 
@@ -23,9 +26,7 @@ const SingleMessage = ({ message, currentUser }: { message: MessageWithAuthor, c
 
   const additionalStyle = isOwnMessage ? "place-items-end" : "";
 
-  const isSynced = true;
-
-  const bg = isSynced ? "bg-gray-600" : "bg-blue-700";
+  const isSynced = message.isSynced;
 
   return (
     <div

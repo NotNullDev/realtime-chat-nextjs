@@ -1,5 +1,6 @@
 import { Message } from "@prisma/client";
 import { z } from "zod";
+import { SyncedMessage } from "../../components/ChatComponent";
 import { MessageWithAuthor } from "../../types/prisma";
 
 import { createRouter } from "./trpcContext";
@@ -25,13 +26,19 @@ export const chatMessagesRouter = createRouter()
     input: z.object({
       authorId: z.string(),
       content: z.string(),
+      id: z.bigint(),
+      isSynced: z.boolean(),
+      author: z.any(),
+      createdAt: z.date(),
+      clientUUID: z.string(),
     }),
     async resolve({ ctx, input }) {
       const createdMessage: Message = await ctx.prisma.message.create({
         data: {
           authorId: input.authorId,
           content: input.content,
-        },
+          clientUUID: input.clientUUID,
+        } as Message,
       });
 
       const messageWithAuthor: MessageWithAuthor =
@@ -72,7 +79,7 @@ export const chatMessagesRouter = createRouter()
           author: true,
         },
         cursor: {
-          id: BigInt(cursor?.toString() ?? 0) as any
+          id: BigInt(cursor?.toString() ?? 0) as any,
         },
         orderBy: {
           createdAt: "desc",

@@ -2,25 +2,39 @@ import create from "zustand";
 import Pusher, { Channel } from "pusher-js";
 import { Message } from "@prisma/client";
 import { MessageWithAuthor } from "../types/prisma";
-import { messagesRouter } from "../server/router/wsChat";
 import zustand from "zustand";
+import { SyncedMessage } from "../components/ChatComponent";
 
 export interface MessagesStore {
-  messages: MessageWithAuthor[];
-  addMessage: (newMessage: MessageWithAuthor) => void;
-  setMessages: (newMessages: MessageWithAuthor[]) => void;
+  messages: SyncedMessage[];
+  addMessage: (newMessage: SyncedMessage) => void;
+  setMessages: (newMessages: SyncedMessage[]) => void;
 }
 
 export const useMessagesStore = create<MessagesStore>()((set) => ({
   messages: [],
-  addMessage: (newMessage: MessageWithAuthor) => {
+  addMessage: (newMessage: SyncedMessage) => {
     set((state) => {
+      const indexOfDuplicate = state.messages.findIndex(
+        (message) => message.clientUUID === newMessage.clientUUID
+      );
+
+      if (indexOfDuplicate !== -1) {
+        const messages = state.messages;
+        newMessage.isSynced = true;
+        messages[indexOfDuplicate] = newMessage;
+        return {
+          messages,
+        };
+
+      }
+
       return {
         messages: [newMessage, ...state.messages],
       };
     });
   },
-  setMessages: (newMessages: MessageWithAuthor[]) => {
+  setMessages: (newMessages: SyncedMessage[]) => {
     set((state) => {
       return {
         messages: newMessages,

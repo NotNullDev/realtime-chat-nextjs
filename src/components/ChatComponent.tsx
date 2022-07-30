@@ -6,13 +6,9 @@ import Pusher from "pusher-js";
 import { TRPCContextState } from "@trpc/react/src/internals/context";
 import { AppRouter } from "../server/router";
 import SingleMessage from "./SingleMessage";
-import {
-  QueryClient,
-  useInfiniteQuery,
-  useQuery,
-  useQueryClient,
-} from "react-query";
+import { useQueryClient } from "react-query";
 import { useMessagesStore } from "../utils/stores";
+import { v4 as uuid } from "uuid";
 
 export type SyncedMessage = MessageWithAuthor & {
   isSynced: boolean;
@@ -39,6 +35,7 @@ const fetchMessages = async ({ queryKey }) => {
 
   return messages as ChatMessageResponse;
 };
+let fetched = false;
 
 export function ChatComponent() {
   const { addMessage, setMessages } = useMessagesStore((state) => state);
@@ -47,14 +44,6 @@ export function ChatComponent() {
   const trpcContext = trpc.useContext();
 
   const queryClient = useQueryClient();
-
-  //   const msgs = useQuery(["fetchMessages", 2], fetchMessages, {
-  //     retry: 2,
-  //     onSuccess(data) {
-  //       console.log("onSuccess", data.messages);
-  //       setMessages(data.messages);
-  //     },
-  //   });
 
   const { data: session } = useSession();
 
@@ -65,12 +54,19 @@ export function ChatComponent() {
   }, [msgBox]);
 
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && !fetched) {
+      fetched = true;
       console.log("Fetching initial messages");
       queryClient
         .fetchQuery(["fetchMessages", 2], fetchMessages)
         .then((data) => {
-          setMessages(data.messages);
+          const syncedMessages: SyncedMessage[] = data.messages.map((msg) => {
+            const syncedMessage = msg as SyncedMessage;
+            syncedMessage.isSynced = true;
+            return syncedMessage;
+          });
+
+          setMessages(syncedMessages);
           console.log("Fetched initial messages!", data);
         })
         .catch((e) => console.log(e));
@@ -86,7 +82,7 @@ export function ChatComponent() {
 
     const channel = pusher.subscribe("chat");
 
-    channel.bind("newMessage", function (data) {
+    channel.bind("newMessage", async function (data) {
       console.log("Received message from the server: ", data);
       addMessage(data);
       scrollIntoView(msgBox);
@@ -120,11 +116,17 @@ export function ChatComponent() {
     }
 
     const message = {
+      id: BigInt("-1"),
       authorId: currentUserId,
       content: e.target.value,
-    };
+      isSynced: false,
+      author: session.user,
+      createdAt: new Date(),
+      clientUUID: uuid(),
+    } as SyncedMessage;
 
     e.target.value = "";
+    addMessage(message);
 
     messageMutation.mutateAsync(message, {
       onSuccess: () => {
@@ -163,7 +165,7 @@ export function ChatComponent() {
               <SingleMessage
                 message={message}
                 currentUser={session?.user}
-                key={message.id}
+                key={message.id.valueOf() as any}
               />
             ))
           )}

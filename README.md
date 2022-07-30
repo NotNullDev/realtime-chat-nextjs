@@ -15,6 +15,10 @@ npx prisma migrate dev
 # prisma studio
 npx prisma studio
 
+# generate NEXTAUTH_SECRET
+openssl rand -base64 32
+
+
 ```
 
 ## Supabase
@@ -37,12 +41,12 @@ supabase start
 # TODO
 
 - [x] Add websocket support
-- [ ] Reduce calls to the database (add caching?)
-- [ ] Message should be added instantly with NOT_SYNC status, then after sync it should be changed to SYNC status
-- [ ] Add heartbeat to the websocket
-- [ ] Add private rooms support
+- [x] Reduce calls to the database (add caching?)
+- [x] Message should be added instantly with NOT_SYNC status, then after sync it should be changed to SYNC status
 - [ ] Use planetscale as production database provider
 - [ ] Deploy first version on vercel
+- [ ] Add heartbeat to the websocket
+- [ ] Add private rooms support
 - [ ] Add tests
 - [ ] Add channels
 - [ ] Add excalidraw to the site

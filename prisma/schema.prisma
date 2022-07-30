@@ -2,12 +2,14 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
 }
 
 model Role {
@@ -18,10 +20,11 @@ model Role {
 
 // Prisma tables
 model Message {
-  id        BigInt   @id @unique @default(autoincrement())
-  authorId  String   @default("NOT_ASSIGNED") @db.VarChar(384)
-  content   String   @db.VarChar(384)
-  createdAt DateTime @default(now())
+  id         BigInt   @id @unique @default(autoincrement())
+  authorId   String   @default("NOT_ASSIGNED") @db.VarChar(384)
+  content    String   @db.VarChar(384)
+  createdAt  DateTime @default(now())
+  clientUUID String   @db.VarChar(384)
 
   author User @relation(fields: [authorId], references: [id])
 }

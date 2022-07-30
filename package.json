@@ -32,6 +32,7 @@
     "socket.io": "^4.5.1",
     "socket.io-client": "^4.5.1",
     "superjson": "^1.9.1",
+    "uuid": "^8.3.2",
     "websocket": "^1.0.34",
     "ws": "^8.8.1",
     "zod": "^3.17.3",
