@@ -4,6 +4,7 @@ import { SyncedMessage } from "../../components/ChatComponent";
 import { MessageWithAuthor } from "../../types/prisma";
 
 import { createRouter } from "./trpcContext";
+import {CAN_NOT_BE_EMPTY, CAN_NOT_BE_LONGER_THAN_500} from "../../utils/errorMessage";
 
 export const MAX_QUERY_LIMIT = 20;
 
@@ -25,7 +26,9 @@ export const chatMessagesRouter = createRouter()
   .mutation("addMessage", {
     input: z.object({
       authorId: z.string(),
-      content: z.string(),
+      content: z.string().trim()
+          .min(50, CAN_NOT_BE_EMPTY)
+          .max(500, CAN_NOT_BE_LONGER_THAN_500),
       id: z.bigint(),
       isSynced: z.boolean(),
       author: z.any(),

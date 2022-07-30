@@ -8,6 +8,7 @@ import { AppRouter } from "../server/router";
 import SingleMessage from "./SingleMessage";
 import { useQueryClient } from "react-query";
 import { useMessagesStore } from "../utils/stores";
+import ErrorMessages from "../utils/errorMessages.json";
 import { v4 as uuid } from "uuid";
 
 export type SyncedMessage = MessageWithAuthor & {
@@ -40,8 +41,7 @@ let fetched = false;
 export function ChatComponent() {
   const { addMessage, setMessages } = useMessagesStore((state) => state);
   const messages = useMessagesStore((state) => state.messages);
-
-  const trpcContext = trpc.useContext();
+  const [validationErrorMessage, setValidationErrorMessage] = useState<string>("");
 
   const queryClient = useQueryClient();
 
@@ -106,6 +106,16 @@ export function ChatComponent() {
 
   const messageTextChangeHandler = (e: any) => {
     if (e.key.toLowerCase() !== "enter") {
+
+      if ( validationErrorMessage !== "" ) {
+        setValidationErrorMessage("");
+      }
+
+      return;
+    }
+
+    if(e.target.value.trim() === "") {
+      setValidationErrorMessage(ErrorMessages.CAN_NOT_BE_EMPTY)
       return;
     }
 
@@ -132,7 +142,9 @@ export function ChatComponent() {
       onSuccess: () => {
         console.log("Message sent!");
       },
-      onError: () => errorHandler(),
+      onError: (error) =>  {
+        setValidationErrorMessage(error.message);
+      }
     });
   };
 
@@ -147,6 +159,9 @@ export function ChatComponent() {
   if (!session?.user) {
     return <div>You are not logged in.</div>;
   }
+
+  const inputErrorStyle = validationErrorMessage !== "" ? `input-error` : ``;
+  let inputErrorMessageStyle = validationErrorMessage === "" ? `hidden` : ``;
 
   return (
     <>
@@ -172,24 +187,11 @@ export function ChatComponent() {
         </div>
         <input
           onKeyDown={(e) => messageTextChangeHandler(e)}
-          className="textarea textarea-bordered mt-2 w-1/2"
+          className={`textarea textarea-bordered mt-2 w-1/2 ${inputErrorStyle}`}
           type="text"
           placeholder="Ctrl + Enter to send message"
         />
-        <div className="btn-group mt-2">
-          <button className="btn" onClick={() => clearMessages(trpcContext)}>
-            Clear
-          </button>
-          <button className="btn" onClick={() => scrollIntoView(msgBox)}>
-            Scroll test
-          </button>
-          <button
-            className="btn"
-            // onClick={() =>{ socketIOClient.emit("kickAll")}}
-          >
-            Kick all
-          </button>
-        </div>
+        <p className={`text-red-500 text-xs italic mt-1 ${inputErrorMessageStyle}`}>{validationErrorMessage}</p>
       </div>
     </>
   );
