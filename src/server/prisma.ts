@@ -6,17 +6,18 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-let logLevel: any = ["query", "info", "warn", "error"]
+// let logLevel: any = ["query", "info", "warn", "error"]
+let logLevel: any = ["error"];
 
 if (env.NODE_ENV === "production") {
-  logLevel = ["error"]
+  logLevel = ["error"];
 }
 
 export const prisma =
   global.prisma ||
   new PrismaClient({
     log: logLevel,
-    errorFormat: "pretty"
+    errorFormat: "pretty",
   });
 
 if (env.NODE_ENV !== "production") {

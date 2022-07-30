@@ -44,7 +44,10 @@ supabase start
 - [ ] Use planetscale as production database provider
 - [ ] Deploy first version on vercel
 - [ ] Add tests
+- [ ] Add channels
+- [ ] Add excalidraw to the site
 
 # Bugs
+
 - [ ] Textarea is not cleared if you press enter many times
 - [ ] Message is not added to the char randomly (seems like prisma is not committing changes?)

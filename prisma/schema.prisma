@@ -18,7 +18,7 @@ model Role {
 
 // Prisma tables
 model Message {
-  id        String   @id @unique @default(uuid())
+  id        BigInt   @id @unique @default(autoincrement())
   authorId  String   @default("NOT_ASSIGNED") @db.VarChar(384)
   content   String   @db.VarChar(384)
   createdAt DateTime @default(now())
@@ -63,6 +63,8 @@ model User {
   roles         Role[]
   accounts      Account[]
   sessions      Session[]
+  channelId     String?   @db.VarChar(384)
+  // Channel       Channel[]
 }
 
 model VerificationToken {
@@ -72,3 +74,14 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+// model Channel {
+//   id      BigInt @id @default(autoincrement())
+//   name    String @unique @db.VarChar(384)
+//   ownerId BigInt
+
+//   activeUsers User[] @relation(name: "activeUsers", fields: [id], references: [id])
+//   admins      User[] @relation(name: "admins", fields: [id], references: [id])
+
+//   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+// }
