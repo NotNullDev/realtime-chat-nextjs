@@ -1,5 +1,5 @@
 import { Message } from "@prisma/client";
-import { z } from "zod";
+import {z, ZodError} from "zod";
 import { SyncedMessage } from "../../components/ChatComponent";
 import { MessageWithAuthor } from "../../types/prisma";
 
@@ -13,6 +13,18 @@ export const MAX_QUERY_LIMIT = 20;
 };
 
 export const chatMessagesRouter = createRouter()
+    .formatError(({ shape, error }) => {
+      return {
+        ...shape,
+        data: {
+          ...shape.data,
+          zodError:
+              error.cause instanceof ZodError
+                  ? error.cause.flatten()
+                  : null,
+        }
+      };
+    })
   .query("getAll", {
     async resolve({ ctx }) {
       return await ctx.prisma.message.findMany({
@@ -27,7 +39,7 @@ export const chatMessagesRouter = createRouter()
     input: z.object({
       authorId: z.string(),
       content: z.string().trim()
-          .min(50, CAN_NOT_BE_EMPTY)
+          .min(1, CAN_NOT_BE_EMPTY)
           .max(500, CAN_NOT_BE_LONGER_THAN_500),
       id: z.bigint(),
       isSynced: z.boolean(),

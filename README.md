@@ -43,9 +43,10 @@ supabase start
 - [x] Add websocket support
 - [x] Reduce calls to the database (add caching?)
 - [x] Message should be added instantly with NOT_SYNC status, then after sync it should be changed to SYNC status
-- [ ] Use planetscale as production database provider
-- [ ] Deploy first version on vercel
-- [ ] Add heartbeat to the websocket
+- [x] Use planetscale as production database provider
+- [x] Deploy first version on vercel
+- [ ] Add User profile
+- [ ] Add anonymous user support
 - [ ] Add private rooms support
 - [ ] Add tests
 - [ ] Add channels
@@ -54,4 +55,4 @@ supabase start
 # Bugs
 
 - [ ] Textarea is not cleared if you press enter many times
-- [ ] Message is not added to the char randomly (seems like prisma is not committing changes?)
+- [x] Message is not added to the char randomly (seems like prisma is not committing changes?)

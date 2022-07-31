@@ -10,6 +10,8 @@ import { useQueryClient } from "react-query";
 import { useMessagesStore } from "../utils/stores";
 import ErrorMessages from "../utils/errorMessages.json";
 import { v4 as uuid } from "uuid";
+import {TRPCClientError} from "@trpc/client";
+import {ZodError} from "zod";
 
 export type SyncedMessage = MessageWithAuthor & {
   isSynced: boolean;
@@ -64,8 +66,7 @@ export function ChatComponent() {
             const syncedMessage = msg as SyncedMessage;
             syncedMessage.isSynced = true;
             return syncedMessage;
-          });
-
+          })
           setMessages(syncedMessages);
           console.log("Fetched initial messages!", data);
         })
@@ -138,23 +139,27 @@ export function ChatComponent() {
     e.target.value = "";
     addMessage(message);
 
-    messageMutation.mutateAsync(message, {
-      onSuccess: () => {
-        console.log("Message sent!");
-      },
-      onError: (error) =>  {
-        setValidationErrorMessage(error.message);
-      }
-    });
+
+    try {
+      messageMutation.mutateAsync(message, {
+        onSuccess: () => {
+          console.log("Message sent!");
+        },
+        onError: (error) => {
+          let errorMessages = JSON.parse(error.message) as TRPCClientError<AppRouter>[];
+
+          let errorMessage = errorMessages.reduce((acc, error) => acc + error.message + ", ", "");
+
+          errorMessage = errorMessage.substring(0, errorMessage.length - 2);
+          setValidationErrorMessage(errorMessage);
+        }
+      }).catch(e => {
+
+      })
+    } catch (e) {
+
+    }
   };
-
-  //   if (msgs.isLoading) {
-  //     return <div>Loading...</div>;
-  //   }
-
-  //   if (msgs.error) {
-  //     return <div>Error reading messages from database.</div>;
-  //   }
 
   if (!session?.user) {
     return <div>You are not logged in.</div>;
@@ -180,7 +185,7 @@ export function ChatComponent() {
               <SingleMessage
                 message={message}
                 currentUser={session?.user}
-                key={message.id.valueOf() as any}
+                key={message.clientUUID}
               />
             ))
           )}
