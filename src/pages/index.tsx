@@ -1,14 +1,10 @@
-import { Message, User } from "@prisma/client";
 import type { NextPage } from "next";
-import { createRef, useEffect, useMemo, useRef, useState } from "react";
-import SingleMessage from "../components/SingleMessage";
+import {createRef, lazy, useEffect, useMemo, useRef, useState} from "react";
 import { trpc } from "../utils/trpc";
-import { TRPCContextState } from "@trpc/react/src/internals/context";
-import { AppRouter } from "../server/router";
 import { useSession } from "next-auth/react";
-import Pusher from "pusher-js";
-import { MessageWithAuthor } from "../types/prisma";
 import { ChatComponent } from "../components/ChatComponent";
+import {Suspense} from "preact/compat";
+import EmbeddedExcalidraw from "../components/EmbeddedExcalidraw";
 
 // let socketIOClient = io(`ws://localhost:3001`);
 
@@ -19,16 +15,28 @@ const SingInComponent = () => {
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
 
+  // const Excalidraw = null;
+
   const trpcContextState = trpc.useContext();
 
   if (status === "loading") {
     return <div>Loading...</div>;
   }
 
+  if ( !session) {
+    return <SingInComponent />;
+  }
+
   return (
     <main className="grid place-items-center flex-1 ">
-      {session && <ChatComponent />}
-      {!session && <SingInComponent />}
+      <div className="flex w-full h-full m-0 " >
+        <div className="flex-[2]">
+            <EmbeddedExcalidraw />
+        </div>
+        <div className="flex-[1] p-4">
+          <ChatComponent/>
+        </div>
+      </div>
     </main>
   );
 };

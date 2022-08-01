@@ -24,12 +24,12 @@ numberOfRenders++;
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <SessionProvider session={pageProps.session} refetchInterval={0}>
-      <div className="w-full mx-auto container flex flex-col min-h-screen">
+      <div className="w-full mx-auto flex flex-col min-h-screen">
         <AppHeader />
         <Component {...pageProps} />
-        <AppFooter />
+        {/*<AppFooter />*/}
       </div>
-      <ReactQueryDevtools initialIsOpen={true} position="bottom-left" />
+      {/*<ReactQueryDevtools initialIsOpen={true} position="bottom-left" />*/}
     </SessionProvider>
   );
 };

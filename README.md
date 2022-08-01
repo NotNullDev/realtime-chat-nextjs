@@ -50,7 +50,8 @@ supabase start
 - [ ] Add private rooms support
 - [ ] Add tests
 - [ ] Add channels
-- [ ] Add excalidraw to the site
+- [x] Add excalidraw to the site
+- [ ] Add live collaboration support to the exaclidraw
 
 # Bugs
 

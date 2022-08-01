@@ -16,3 +16,9 @@ body,
     @apply bg-accent;
     @apply rounded-xl;
 }
+::-webkit-scrollbar {
+    @apply w-3;
+}
+/** {*/
+/*    border: 1px solid black;*/
+/*}*/
