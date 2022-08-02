@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env NODE_ENV='development' next dev",
     "dev-debug": "cross-env NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
     "start": "next start",
@@ -11,6 +11,8 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "^0.12.0",
+    "@nnd/excalidraw-client": "file:excalidraw-excalidraw-v0.12.0.tgz",
     "@next-auth/prisma-adapter": "^1.0.4",
     "@prisma/client": "^4.0.0",
     "@tanstack/react-virtual": "^3.0.0-beta.13",

@@ -1,4 +1,5 @@
-import {Excalidraw} from "@excalidraw/excalidraw";
+// import {Excalidraw} from "@excalidraw/excalidraw";
+import { Excalidraw  } from "@nnd/excalidraw-client"
 import {useEffect, useState} from "react";
 
 export default function EmbeddedExcalidraw () {
@@ -11,10 +12,13 @@ export default function EmbeddedExcalidraw () {
         })
     }, []);
 
+
     return <div className="w-full h-full">
         { ExcalidrawComponent &&
             <ExcalidrawComponent
                 theme="dark"
+                detectScroll={true}
+                gridModeEnabled={true}
             />
         }
         { !ExcalidrawComponent && <div>Loading canvas...</div> }
