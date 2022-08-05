@@ -1,7 +1,7 @@
-import NextAuth, { NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import { prisma } from "../../../server/prisma"
-import {PrismaAdapter} from "@next-auth/prisma-adapter";
+import NextAuth, { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { prisma } from "../../../server/prisma";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -15,28 +15,33 @@ export const authOptions: NextAuthOptions = {
   theme: {
     colorScheme: "auto",
   },
+  pages: {
+    // signIn: "/signIn",
+    error: "/error",
+    signOut: "/signOut",
+    newUser: "/newUser",
+    verifyRequest: "/verifyRequest",
+  },
   callbacks: {
     async jwt({ token, isNewUser, user }) {
-
       if (isNewUser) {
-        console.log("New user has been created:", user)
+        console.log("New user has been created:", user);
       }
 
       return token;
     },
     async session({ session, user }) {
-
       session = {
         ...session,
         user: {
           ...session.user,
-          id: user.id
-        }
-      }
+          id: user.id,
+        },
+      };
 
       return session;
-    }
+    },
   },
-}
+};
 
-export default NextAuth(authOptions)
+export default NextAuth(authOptions);

@@ -6,8 +6,6 @@ import superjson from "superjson";
 import "../styles/globals.css";
 import { SessionProvider } from "next-auth/react";
 import AppHeader from "../components/AppHeader";
-import AppFooter from "../components/AppFooter";
-import {ReactQueryDevtools} from "react-query/devtools";
 
 export let appWs: WebSocket | null = null;
 
@@ -34,7 +32,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
   );
 };
 
-const getBaseUrl = () => {
+export const getBaseUrl = () => {
   if (typeof window !== "undefined") {
     return "";
   }

@@ -1,44 +1,41 @@
-import type { NextPage } from "next";
-import {createRef, lazy, useEffect, useMemo, useRef, useState} from "react";
-import { trpc } from "../utils/trpc";
-import { useSession } from "next-auth/react";
-import { ChatComponent } from "../components/ChatComponent";
-import {Suspense} from "preact/compat";
+import type {NextPage} from "next";
+import {useSession} from "next-auth/react";
+import {ChatComponent} from "../components/ChatComponent";
 import EmbeddedExcalidraw from "../components/EmbeddedExcalidraw";
+import {router} from "next/client";
 
 // let socketIOClient = io(`ws://localhost:3001`);
 
 const SingInComponent = () => {
-  return <div className="p-3">You are not logged in!</div>;
+    return <div className="p-3">You are not logged in!</div>;
 };
 
 const Home: NextPage = () => {
-  const { data: session, status } = useSession();
+    const {data: session, status} = useSession();
 
-  // const Excalidraw = null;
+    if (status === "loading") {
+        return <div>Loading...</div>;
+    }
 
-  const trpcContextState = trpc.useContext();
+    if (!session) {
+        router.push("/api/auth/signin/google");
+        return <div>Redirecting...</div>;
+        // return <SingInComponent/>;
+    }
 
-  if (status === "loading") {
-    return <div>Loading...</div>;
-  }
-
-  if ( !session) {
-    return <SingInComponent />;
-  }
-
-  return (
-    <main className="grid place-items-center flex-1 ">
-      <div className="flex w-full h-full m-0 " >
-        <div className="flex-[2]">
-            <EmbeddedExcalidraw />
-        </div>
-        <div className="flex-[1] p-4">
-          <ChatComponent/>
-        </div>
-      </div>
-    </main>
-  );
+    return (
+        <main className="grid place-items-center flex-1">
+            <div className="flex w-full h-full m-0 ">
+                <div className="flex-[2]">
+                    <EmbeddedExcalidraw/>
+                </div>
+                <div className="flex-[1] p-4">
+                    <ChatComponent/>
+                </div>
+            </div>
+        </main>
+    );
 };
+
 
 export default Home;
