@@ -4,8 +4,10 @@ import type { AppRouter } from "../server/router";
 import type { AppType } from "next/dist/shared/lib/utils";
 import superjson from "superjson";
 import "../styles/globals.css";
-import { SessionProvider } from "next-auth/react";
+import {getCsrfToken, SessionProvider} from "next-auth/react";
 import AppHeader from "../components/AppHeader";
+// @ts-ignore
+import {GetServerSideProps} from "next";
 
 export let appWs: WebSocket | null = null;
 
@@ -23,7 +25,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <SessionProvider session={pageProps.session} refetchInterval={0}>
       <div className="w-full mx-auto flex flex-col min-h-screen">
-        <AppHeader />
+        <AppHeader csrfToken={pageProps.csrfToken}/>
         <Component {...pageProps} />
         {/*<AppFooter />*/}
       </div>
@@ -64,3 +66,13 @@ export default withTRPC<AppRouter>({
    */
   ssr: false,
 })(MyApp);
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const csrfToken = await getCsrfToken();
+
+  return {
+    props: {
+      csrfToken,
+    },
+  };
+};
