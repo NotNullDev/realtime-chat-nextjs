@@ -1,4 +1,4 @@
-import {createRef, useEffect, useState} from "react";
+import {createRef, useEffect, useRef, useState} from "react";
 import {MessageWithAuthor} from "../types/prisma";
 import {trpc} from "../utils/trpc";
 import {useSession} from "next-auth/react";
@@ -49,7 +49,20 @@ export function ChatComponent() {
 
     const {data: session} = useSession();
 
-    const msgBox = createRef<HTMLDivElement>();
+    const msgBox = useRef<HTMLDivElement>();
+
+    const textArea = useRef<HTMLTextAreaElement>();
+
+    useEffect(() => {
+        document.addEventListener("keydown", (e) => {
+            console.log(document.activeElement);
+            console.log(textArea.current);
+            if (document.activeElement !== textArea.current && e.key === "/") {
+                textArea.current?.focus();
+                e.preventDefault();
+            }
+        });
+    }, []);
 
     useEffect(() => {
         scrollIntoView(msgBox);
@@ -115,50 +128,55 @@ export function ChatComponent() {
             return;
         }
 
-        if (e.target.value.trim() === "") {
-            setValidationErrorMessage(ErrorMessages.CAN_NOT_BE_EMPTY)
-            return;
+        if (e.ctrlKey && e.key === "Enter") {
+
+            if (e.target.value.trim() === "") {
+                setValidationErrorMessage(ErrorMessages.CAN_NOT_BE_EMPTY)
+                return;
+            }
+
+            const currentUserId = session?.user?.id;
+            if (!currentUserId) {
+                console.log("Current session object: ", session);
+                throw new Error("Error: currentUserId is null");
+            }
+
+            const message = {
+                id: BigInt("-1"),
+                authorId: currentUserId,
+                content: e.target.value,
+                isSynced: false,
+                author: session.user,
+                createdAt: new Date(),
+                clientUUID: uuid(),
+            } as SyncedMessage;
+
+            e.target.value = "";
+            addMessage(message);
+
+            try {
+                messageMutation.mutateAsync(message, {
+                    onSuccess: () => {
+                        console.log("Message sent!");
+                    },
+                    onError: (error) => {
+                        let errorMessages = JSON.parse(error.message) as TRPCClientError<AppRouter>[];
+
+                        let errorMessage = errorMessages.reduce((acc, error) => acc + error.message + ", ", "");
+
+                        errorMessage = errorMessage.substring(0, errorMessage.length - 2);
+                        setValidationErrorMessage(errorMessage);
+                    }
+                }).catch(e => {
+
+                })
+            } catch (e) {
+
+            }
+
         }
 
-        const currentUserId = session?.user?.id;
-        if (!currentUserId) {
-            console.log("Current session object: ", session);
-            throw new Error("Error: currentUserId is null");
-        }
 
-        const message = {
-            id: BigInt("-1"),
-            authorId: currentUserId,
-            content: e.target.value,
-            isSynced: false,
-            author: session.user,
-            createdAt: new Date(),
-            clientUUID: uuid(),
-        } as SyncedMessage;
-
-        e.target.value = "";
-        addMessage(message);
-
-
-        try {
-            messageMutation.mutateAsync(message, {
-                onSuccess: () => {
-                    console.log("Message sent!");
-                },
-                onError: (error) => {
-                    let errorMessages = JSON.parse(error.message) as TRPCClientError<AppRouter>[];
-
-                    let errorMessage = errorMessages.reduce((acc, error) => acc + error.message + ", ", "");
-
-                    errorMessage = errorMessage.substring(0, errorMessage.length - 2);
-                    setValidationErrorMessage(errorMessage);
-                }
-            }).catch(e => {
-
-            })
-        } catch (e) {
-
-        }
     };
 
     if (!session?.user) {
@@ -172,7 +190,7 @@ export function ChatComponent() {
         <>
             <div className="h-full flex flex-col items-center">
                 <div
-                    className="h-[80vh] w-full card shadow-xl p-3 flex flex-col-reverse overflow-y-scroll"
+                    className="h-[65vh] w-full card shadow-xl p-3 flex flex-col-reverse overflow-y-scroll"
                     id="messages"
                 >
                     <div ref={msgBox}></div>
@@ -191,12 +209,15 @@ export function ChatComponent() {
                     )}
                 </div>
                 <div className="w-full">
-                    <input
-                        onKeyDown={(e) => messageTextChangeHandler(e)}
-                        className={`w-full text-center textarea textarea-bordered mt-2 ${inputErrorStyle}`}
-                        type="text"
-                        placeholder="Ctrl + Enter to send message"
-                    />
+                    <div className="flex justify-center items-center mt-2 px-6">
+                        <textarea
+                            onKeyDown={(e) => messageTextChangeHandler(e)}
+                            className={`w-full text-start textarea textarea-bordered ${inputErrorStyle}`}
+                            placeholder="Ctrl + Enter to send message, '/' to focus"
+                            ref={textArea}
+                        />
+                        <button type="submit" className="btn ml-3">Send</button>
+                    </div>
                     <p className={`text-red-500 text-xs italic mt-1 ${inputErrorMessageStyle}`}>{validationErrorMessage}</p>
                 </div>
             </div>

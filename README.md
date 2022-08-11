@@ -46,13 +46,14 @@ supabase start
 - [x] Use planetscale as production database provider
 - [x] Deploy first version on vercel
 - [x] Add excalidraw to the site
+- [ ] Add channels
 - [ ] Add User profile
 - [ ] Add anonymous user support
 - [ ] Add user avatar support
 - [ ] Add option to resize canvas to chat ratio in the room
 - [ ] Add private rooms support
 - [ ] Add tests
-- [ ] Add channels
+
 - [ ] Add live collaboration support to the exaclidraw
 
 # Bugs

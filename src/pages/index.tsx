@@ -1,5 +1,6 @@
-import {useRef, useState} from "react";
-import {ampValidation} from "next/dist/build/output";
+import {useEffect, useRef, useState} from "react";
+import {useAnonymousUserStore} from "../utils/stores";
+import Link from "next/link";
 
 interface ActiveChannel {
     channelName: string;
@@ -58,7 +59,7 @@ const RightSideBar = ({activeChannels}: { activeChannels: ActiveChannel[] }) => 
             <div className="flex items-center justify-center w-full mb-5" ref={searchBarRef}>
                 {/* TODO: Add fade animation */}
                 <input className="p-3 w-64 input input-bordered transition-transform duration-300 m"
-                       placeholder="Search..." />
+                       placeholder="Search..."/>
                 <div className="ml-12">
                     Filter options (categories) (TODO)
                 </div>
@@ -75,28 +76,10 @@ const RightSideBar = ({activeChannels}: { activeChannels: ActiveChannel[] }) => 
         </div>);
 }
 
-const NickNameComponent = () => {
-    const nickname = "RandomBalunga35";
+function JoinRoomModalBody( {createRoom} ) {
 
     return (
-        <div className="flex">
-            <span className="mr-2">Your nickname: <strong>{nickname}</strong></span>
-
-            <button>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"/>
-                    <path fillRule="evenodd"
-                          d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
-                          clipRule="evenodd"/>
-                </svg>
-            </button>
-
-        </div>
-    );
-}
-
-function joinRoomModalBody(title: string, setRoomName: (value: (((prevState: string) => string) | string)) => void, createRoom: () => void, activeChannels: ActiveChannel[]) {
-    return <>
+        <>
         <h1 className="mb-3">Enter provided private room key</h1>
 
         <input className="input input-bordered" placeholder="Room key"/>
@@ -109,10 +92,10 @@ function joinRoomModalBody(title: string, setRoomName: (value: (((prevState: str
                 <label htmlFor="my-modal" className="btn btn-error">Cancel</label>
             </button>
         </div>
-    </>;
+    </>);
 }
 
-function createRoomModalBody(title: string, setRoomName: (value: (((prevState: string) => string) | string)) => void, createRoom: () => void) {
+function CreateRoomModalBody({title, setRoomName, createRoom}: { title: string, setRoomName: (value: (((prevState: string) => string) | string)) => void, createRoom: () => void }) {
     return <>
         <h1>{title}</h1>
 
@@ -129,34 +112,97 @@ function createRoomModalBody(title: string, setRoomName: (value: (((prevState: s
     </>;
 }
 
+function ChangeNameModalBody({username, setUsername}) {
+
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    return <>
+        <h1>Change your name</h1>
+
+        <input type="text" className="input input-bordered w-full max-w-xs mt-2" ref={inputRef}/>
+        <div className="flex -mt-3">
+            <button className="modal-action">
+                <label htmlFor="my-modal" className="btn btn-success mr-2" onClick={() => setUsername(inputRef.current?.value ?? "ERROR")}>Change</label>
+            </button>
+            <button className="modal-action">
+                <label htmlFor="my-modal" className="btn btn-error">Cancel</label>
+            </button>
+        </div>
+    </>;
+}
+
 const ButtonGroup = (
     {
-        activeChannels
+        activeChannels,
+        username,
+        setUsername,
     }
 ) => {
+
+
     const [roomName, setRoomName] = useState("Pogaduszki");
 
     const toggleElement = useRef<HTMLInputElement>(null);
 
     const [isPrivate, setIsPrivate] = useState(false);
 
-    const [isJoin, setIsJoin] = useState(false);
+    const [modalBody, setModalBody] = useState("changeName");
 
     const title = isPrivate ? "Private room name" : "Public room name";
 
+    const [tempUsername, setTempUsername] = useState(username);
+
+    const onKeyDownListener = (e) => {
+        if (e.key === "Escape" && toggleElement.current) {
+            toggleElement.current.checked = false;
+        } else if (e.key === "Enter" && toggleElement.current) {
+            toggleElement.current.checked = false;
+            console.log("Created room");
+        }
+    }
+
+    const updateUsername = (e) => {
+        setUsername(tempUsername);
+    }
+
+    // Global key listeners
+    useEffect(() => {
+        console.log("Adding key listener");
+        document.onkeydown = onKeyDownListener;
+
+        return () => {
+            document.removeEventListener("keydown", onKeyDownListener)
+            console.log('removed key listener');
+        };
+    });
+
+
+
     const openModal = (isPrivate) => {
         setIsPrivate(isPrivate);
-        setIsJoin(false);
+
+        if (isPrivate) {
+            setModalBody("private");
+        } else {
+            setModalBody("public");
+        }
 
         if (toggleElement.current) {
-            toggleElement.current.checked = !toggleElement.current.checked;
+            toggleElement.current.checked = true;
+        }
+    }
+
+    const openChangeNameModal = () => {
+        setModalBody("changeName");
+        if (toggleElement.current) {
+            toggleElement.current.checked = true;
         }
     }
 
     const openJoinModal = () => {
-        setIsJoin(true);
+        setModalBody("join");
         if (toggleElement.current) {
-            toggleElement.current.checked = !toggleElement.current.checked;
+            toggleElement.current.checked = true;
         }
     }
 
@@ -165,34 +211,54 @@ const ButtonGroup = (
     }
 
     return (
-        <div className="flex">
+        <>
+            <div className="flex mb-2">
+                <span className="mr-2">Your nickname: <strong>{username}</strong></span>
+
+                <button onClick={() => openChangeNameModal()}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"/>
+                        <path fillRule="evenodd"
+                              d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
+                              clipRule="evenodd"/>
+                    </svg>
+                </button>
+            </div>
+
             <div className="flex">
-                <div className="btn m-2">Join random room</div>
-                <div className="btn m-2" onClick={() => openJoinModal()}>Join private room</div>
                 <div className="flex">
-                    <div className="btn m-2 modal-button" onClick={() => openModal(false)}>
-                        Create public room
+                    <Link href={"/room"}>
+                        <div className="btn m-2">Join random room</div>
+                    </Link>
+                    <div className="btn m-2" onClick={() => openJoinModal()}>Join private room</div>
+                    <div className="flex">
+                        <div className="btn m-2 modal-button" onClick={() => openModal(false)}>
+                            Create public room
+                        </div>
+                        <div className="btn m-2" onClick={() => openModal(true)}>Create private room</div>
                     </div>
-                    <div className="btn m-2" onClick={() => openModal(true)}>Create private room</div>
                 </div>
-            </div>
 
-            {/*New room modal*/}
-            <input type="checkbox" id="my-modal" className="modal-toggle" ref={toggleElement}/>
-            <div className="modal">
-                <div className="modal-box flex flex-col items-center justify-center">
-                    {
-                        !isJoin
-                            ? createRoomModalBody(title, setRoomName, createRoom)
-                            : joinRoomModalBody(title, setRoomName, createRoom, activeChannels)
-                    }
+                {/*New room modal*/}
+                <input type="checkbox" id="my-modal" className="modal-toggle" ref={toggleElement}/>
+                <div className="modal">
+                    <div className="modal-box flex flex-col items-center justify-center">
+                        {
+                            modalBody === "join" && <JoinRoomModalBody createRoom={createRoom} />
+                        }
+                        {
+                            (modalBody === "public" || modalBody === "private") && <CreateRoomModalBody  title={title} createRoom={createRoom} setRoomName={setRoomName}  />
+                        }
+                        {
+                            modalBody === "changeName" && <ChangeNameModalBody username={username} setUsername={setUsername}/>
+                        }
+                    </div>
                 </div>
-            </div>
-            {/*New room modal*/}
+                {/*New room modal*/}
 
-        </div>);
+            </div>
+        </>);
 }
-
 
 export default function Index() {
     const activeChannels: ActiveChannel[] = [
@@ -234,11 +300,16 @@ export default function Index() {
         },
     ];
 
+    const {username, setUsername}    = useAnonymousUserStore(state => {
+        return {
+            username: state.username,
+            setUsername: state.setUsername
+        }
+    });
+
     return <div className="flex flex-col flex-1 justify-start mt-12 items-center">
         <div className="flex flex-col items-center mb-4">
-            <NickNameComponent/>
-            <div className="mt-2"></div>
-            <ButtonGroup activeChannels={activeChannels}/>
+            <ButtonGroup activeChannels={activeChannels} username={username} setUsername={setUsername}/>
         </div>
         <RightSideBar activeChannels={activeChannels}/>
         <span className="mt-4 bg-red-900"/>

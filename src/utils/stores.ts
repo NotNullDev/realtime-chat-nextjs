@@ -1,12 +1,6 @@
 import create from "zustand";
-import Pusher, {Channel} from "pusher-js";
-import {Message} from "@prisma/client";
-import {MessageWithAuthor} from "../types/prisma";
-import zustand from "zustand";
 import {SyncedMessage} from "../components/ChatComponent";
-import theme from "tailwindcss/defaultTheme";
 import {generators} from "openid-client";
-import state = generators.state;
 
 export interface MessagesStore {
     messages: SyncedMessage[];
@@ -66,6 +60,23 @@ export const useThemeStore = create<ThemeStore>()((set) => ({
             state.theme = theme;
             return state;
         })
+    }
+}));
+
+export interface AnonymousUser {
+    username: string;
+    setUsername: (username: string) => void;
+}
+
+export const useAnonymousUserStore = create<AnonymousUser>()((set) => ({
+    username: "RandomBalunga35",
+    setUsername: (username: string) => {
+        set((state) => {
+            return {
+                ...state,
+                username
+            };
+        });
     }
 }));
 

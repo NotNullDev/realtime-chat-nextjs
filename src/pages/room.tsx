@@ -3,6 +3,7 @@ import {useSession} from "next-auth/react";
 import {ChatComponent} from "../components/ChatComponent";
 import EmbeddedExcalidraw from "../components/EmbeddedExcalidraw";
 import {router} from "next/client";
+import {useEffect} from "react";
 
 // let socketIOClient = io(`ws://localhost:3001`);
 
@@ -25,10 +26,10 @@ const Home: NextPage = () => {
 
     return (
         <main className="grid place-items-center flex-1">
-            <div className="flex w-full h-full m-0 ">
-                <div className="flex-[2]">
-                    <EmbeddedExcalidraw/>
-                </div>
+            <div className="flex w-[60vw] min-w-[550px]  h-full m-0 px-16  ">
+                {/*<div className="flex-[2]">*/}
+                {/*    <EmbeddedExcalidraw/>*/}
+                {/*</div>*/}
                 <div className="flex-[1] p-4">
                     <ChatComponent/>
                 </div>
