@@ -67,7 +67,23 @@ model User {
   accounts      Account[]
   sessions      Session[]
   channelId     String?   @db.VarChar(384)
-  // Channel       Channel[]
+  Room          Room[]
+}
+
+model AdminUser {
+  id     BigInt @id @default(autoincrement())
+  userId String
+  roomId BigInt
+
+  Room   Room?  @relation(fields: [roomId], references: [id])
+}
+
+model ActiveUser {
+  id     BigInt @id @default(autoincrement())
+  userId String
+  roomId BigInt
+
+  room Room @relation(fields: [roomId], references: [id])
 }
 
 model VerificationToken {
@@ -78,13 +94,13 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// model Channel {
-//   id      BigInt @id @default(autoincrement())
-//   name    String @unique @db.VarChar(384)
-//   ownerId BigInt
+model Room {
+  id          BigInt       @id @unique @default(autoincrement())
+  ownerId     String
+  name        String       @db.VarChar(384)
+  admins      AdminUser[]
+  activeUsers ActiveUser[]
 
-//   activeUsers User[] @relation(name: "activeUsers", fields: [id], references: [id])
-//   admins      User[] @relation(name: "admins", fields: [id], references: [id])
-
-//   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-// }
+  owner     User        @relation(fields: [userId], references: [id])
+  userId    String
+}
