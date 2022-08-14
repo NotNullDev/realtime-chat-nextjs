@@ -1,10 +1,34 @@
-import { User } from "@prisma/client";
+import { User, Room } from "@prisma/client";
 
 export function joinRandomRoom(user: User) {}
 
 export function joinPrivateRoom(privateRoomCode: string) {}
 
-export function createPublicRoom(roomName: string, owner: User) {}
+export async function createPublicRoom(roomName: string, owner: User) {
+  // const firstRoom: Room | null | undefined = await prisma?.room.findFirst({
+  //   include:{
+  //     activeUsers: true,
+  //     admins: true
+  //   }
+  // });
+  prisma?.room.findFirst({
+    select: {
+      name: true
+    },
+    where: {
+      name: roomName
+    }
+  });
+
+  prisma?.room.create({
+    data: {
+      ownerId: owner.id,
+      name: roomName
+    }
+
+  })
+
+}
 
 /** Returns privateRoomKey */
 export function createPrivateRoom(roomName: string, owner: User): string {

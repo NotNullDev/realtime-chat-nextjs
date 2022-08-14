@@ -67,7 +67,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   channelId     String?   @db.VarChar(384)
-  Room          Room[]
+  rooms          Room[]
 }
 
 model AdminUser {
@@ -75,7 +75,7 @@ model AdminUser {
   userId String
   roomId BigInt
 
-  Room   Room?  @relation(fields: [roomId], references: [id])
+  room   Room?  @relation(fields: [roomId], references: [id])
 }
 
 model ActiveUser {
@@ -101,6 +101,5 @@ model Room {
   admins      AdminUser[]
   activeUsers ActiveUser[]
 
-  owner     User        @relation(fields: [userId], references: [id])
-  userId    String
+  owner     User        @relation(fields: [ownerId], references: [id])
 }

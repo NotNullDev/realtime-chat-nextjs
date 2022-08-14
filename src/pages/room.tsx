@@ -1,11 +1,7 @@
 import type {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import {ChatComponent} from "../components/ChatComponent";
-import EmbeddedExcalidraw from "../components/EmbeddedExcalidraw";
 import {router} from "next/client";
-import {useEffect} from "react";
-
-// let socketIOClient = io(`ws://localhost:3001`);
 
 const SingInComponent = () => {
     return <div className="p-3">You are not logged in!</div>;
