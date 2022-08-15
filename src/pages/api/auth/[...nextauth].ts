@@ -5,7 +5,8 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  debug: process.env.NODE_ENV === "development",
+  // debug: process.env.NODE_ENV === "development",
+  debug: false,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_ID ?? "",
@@ -16,17 +17,25 @@ export const authOptions: NextAuthOptions = {
     colorScheme: "auto",
   },
   pages: {
-    // signIn: "/signIn",
-    error: "/error",
-    signOut: "/signOut",
-    newUser: "/newUser",
-    verifyRequest: "/verifyRequest",
+    // signIn: "/hello",
+    // error: "/error",
+    // signOut: "/signOut",
+    // newUser: "/newUser",
+    // verifyRequest: "/verifyRequest",
   },
   callbacks: {
+    async redirect(ctx) {
+
+      console.log("redirect", ctx);
+
+      return ctx.url;
+    },
     async jwt({ token, isNewUser, user }) {
       if (isNewUser) {
         console.log("New user has been created:", user);
       }
+
+      // console.log("User has been signed in:", user);
 
       return token;
     },
@@ -38,6 +47,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
         },
       };
+
+      // console.log("Session:", session);
 
       return session;
     },

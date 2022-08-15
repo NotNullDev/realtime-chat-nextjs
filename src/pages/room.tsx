@@ -1,7 +1,7 @@
 import type {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import {ChatComponent} from "../components/ChatComponent";
-import {router} from "next/client";
+import router from "next/router";
 
 const SingInComponent = () => {
     return <div className="p-3">You are not logged in!</div>;
@@ -10,14 +10,15 @@ const SingInComponent = () => {
 const Home: NextPage = () => {
     const {data: session, status} = useSession();
 
+
     if (status === "loading") {
         return <div>Loading...</div>;
     }
 
+
     if (!session) {
         router.push("/api/auth/signin/google");
-        return <div>Redirecting...</div>;
-        // return <SingInComponent/>;
+        return <div>You are not logged in...</div>;
     }
 
     return (

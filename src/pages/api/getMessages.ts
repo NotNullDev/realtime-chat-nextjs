@@ -23,7 +23,7 @@ const examples = async (req: NextApiRequest, res: NextApiResponse) => {
       },
       take: 10,
       orderBy: {
-        id: "desc",
+        id: "desc"
       },
       // where: {
       //   id: {
