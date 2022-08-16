@@ -20,6 +20,7 @@ const examples = async (req: NextApiRequest, res: NextApiResponse) => {
     await prisma.message.findMany({
       include: {
         author: true,
+        room: true
       },
       take: 10,
       orderBy: {

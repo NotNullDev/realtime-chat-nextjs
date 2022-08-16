@@ -51,9 +51,9 @@ export function ChatComponent() {
 
     const {data: session} = useSession();
 
-    const msgBox = useRef<HTMLDivElement>();
+    const msgBox = useRef<HTMLDivElement>(null);
 
-    const textArea = useRef<HTMLTextAreaElement>();
+    const textArea = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         document.addEventListener("keydown", (e) => {

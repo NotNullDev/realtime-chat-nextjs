@@ -30,6 +30,7 @@ export const chatMessagesRouter = createRouter()
       return await ctx.prisma.message.findMany({
         include: {
           author: true,
+          room: true
         },
       });
     },
@@ -46,13 +47,16 @@ export const chatMessagesRouter = createRouter()
       author: z.any(),
       createdAt: z.date(),
       clientUUID: z.string(),
+      roomId: z.bigint()
     }),
     async resolve({ ctx, input }) {
+
       const createdMessage: Message = await ctx.prisma.message.create({
         data: {
           authorId: input.authorId,
           content: input.content,
           clientUUID: input.clientUUID,
+          roomId: input.roomId,
         } as Message,
       });
 
@@ -63,6 +67,7 @@ export const chatMessagesRouter = createRouter()
           },
           include: {
             author: true,
+            room: true
           },
         });
 

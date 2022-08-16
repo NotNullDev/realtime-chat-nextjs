@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client'
 
 export type MessageWithAuthor = Prisma.MessageGetPayload<{
     include: {
-        author: true
+        author: true,
+        room: true
     }
 }>
