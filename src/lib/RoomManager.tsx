@@ -1,4 +1,5 @@
 import { User, Room } from "@prisma/client";
+import pusher from "../server/pusher";
 
 export function joinRandomRoom(user: User) {}
 
@@ -26,11 +27,12 @@ export async function createPublicRoom(roomName: string, owner: User) {
       name: roomName
     }
 
-  })
+  });
 
 }
 
 /** Returns privateRoomKey */
 export function createPrivateRoom(roomName: string, owner: User): string {
+
   return "";
 }

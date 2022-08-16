@@ -40,6 +40,24 @@ export const useMessagesStore = create<MessagesStore>()((set) => ({
     },
 }));
 
+export interface RoomStore {
+    roomName: string;
+    setRoomName: (newRoomName: string) => void;
+}
+
+export const useRoomStore = create<RoomStore>()( (set) => ({
+    roomName: "",
+    setRoomName: (newRoomName: string) => {
+        set((state) => {
+            return {
+                ...state,
+                roomName: newRoomName,
+            };
+        });
+    },
+}));
+
+
 export interface ThemeStore {
     theme: string;
     toggleTheme: () => void;

@@ -1,5 +1,4 @@
-// import {Excalidraw} from "@excalidraw/excalidraw";
-import { Excalidraw  } from "@nnd/excalidraw-client"
+import {Excalidraw} from "@excalidraw/excalidraw";
 import {useEffect, useState} from "react";
 
 export default function EmbeddedExcalidraw () {

@@ -25,8 +25,10 @@ model Message {
   content    String   @db.VarChar(384)
   createdAt  DateTime @default(now())
   clientUUID String   @db.VarChar(384)
+  roomId     BigInt   @db.BigInt
 
   author User @relation(fields: [authorId], references: [id])
+  room   Room @relation(fields: [roomId], references: [id])
 }
 
 model Account {
@@ -100,6 +102,7 @@ model Room {
   name        String       @db.VarChar(384)
   admins      AdminUser[]
   activeUsers ActiveUser[]
+  messages    Message[]
 
   owner     User        @relation(fields: [ownerId], references: [id])
 }

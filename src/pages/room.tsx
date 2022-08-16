@@ -17,8 +17,10 @@ const Home: NextPage = () => {
 
 
     if (!session) {
-        router.push("/api/auth/signin/google");
-        return <div>You are not logged in...</div>;
+        router.push("/login");
+        return <div className="flex1 items-center justify-center">
+            <div>Loading...</div>
+        </div>
     }
 
     return (

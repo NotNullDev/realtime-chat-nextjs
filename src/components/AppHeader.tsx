@@ -1,18 +1,18 @@
 import { signOut, useSession, signIn } from "next-auth/react";
 import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { getBaseUrl } from "../pages/_app";
 // @ts-ignore
 import { GetServerSideProps } from "next";
-import { Session } from "next-auth";
 
 function AccountComponent({
   session,
   csrfToken,
   callbackUri,
 }: {
-  session: Session;
+  session: ReturnType<typeof useSession>;
   csrfToken: string;
   callbackUri: string;
 }) {
@@ -38,29 +38,26 @@ function AccountComponent({
     <div className="flex flex-row-reverse p-2 w-full m10-5">
       {session?.status === "unauthenticated" && (
         <>
-          <button
-            className="border-black border rounded p-2 px-4"
-            type="submit"
-            onClick={() => signIn("google")}
-          >
-            Sign in
-          </button>
-
-          <form method="POST" action="/api/auth/signin/google">
-            <input type="hidden" name="csrfToken" value={csrfToken} />
-            <input type="hidden" name="callbackUri" value={callbackUri} />
+          <div className="mr-3">
+            {/* <Link href="/login"> */}
             <button
-              className="border-black border rounded p-2 px-4"
-              type="submit"
+              className="btn btn-ghost"
+              onClick={() =>
+                signIn("google", {
+                  redirect: true,
+                  callbackUrl: "/",
+                })
+              }
             >
               Sign in
             </button>
-          </form>
+            {/* </Link> */}
+          </div>
         </>
       )}
       {session?.status === "authenticated" && (
         <button
-          className="border-black border rounded p-2 px-4"
+          className="btn btn-ghost"
           onClick={() =>
             signOut({
               callbackUrl: "/",
@@ -117,6 +114,7 @@ export default function AppHeaderComponent({ csrfToken }) {
           <a className="btn btn-ghost normal-case text-xl">Chat</a>
         </Link>
         <AccountComponent
+          // @ts-ignore
           session={session}
           csrfToken={csrfToken}
           callbackUri="/api/auth/signin/google"
@@ -134,7 +132,7 @@ export default function AppHeaderComponent({ csrfToken }) {
             </svg>
 
             <svg
-              className="swap-offa fill-current w-7 h-7"
+              className="swap-off fill-current w-7 h-7"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
             >

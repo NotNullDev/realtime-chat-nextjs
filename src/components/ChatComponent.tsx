@@ -45,6 +45,8 @@ export function ChatComponent() {
     const messages = useMessagesStore((state) => state.messages);
     const [validationErrorMessage, setValidationErrorMessage] = useState<string>("");
 
+    const [channelName, setChannelName] = useState<string>("");
+
     const queryClient = useQueryClient();
 
     const {data: session} = useSession();
@@ -193,7 +195,7 @@ export function ChatComponent() {
                     className="h-[65vh] w-full card shadow-xl p-3 flex flex-col-reverse overflow-y-scroll"
                     id="messages"
                 >
-                    <div ref={msgBox}></div>
+                    <div ref={msgBox}></div> {/* TODO: change mechanism for auto scrolling - current contains bugs*/}
                     {messages.length == 0 ? (
                         <div className="grid place-items-center w-full h-full">
                             <p className="">No messages to show</p>
