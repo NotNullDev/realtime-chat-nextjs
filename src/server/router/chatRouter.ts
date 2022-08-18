@@ -1,10 +1,13 @@
-import { Message } from "@prisma/client";
-import {z, ZodError} from "zod";
+import { Message, Room } from "@prisma/client";
+import { z, ZodError } from "zod";
 import { SyncedMessage } from "../../components/ChatComponent";
-import { MessageWithAuthor } from "../../types/prisma";
+import { ChatRoom, MessageWithAuthor } from "../../types/prisma";
 
 import { createRouter } from "./trpcContext";
-import {CAN_NOT_BE_EMPTY, CAN_NOT_BE_LONGER_THAN_500} from "../../utils/errorMessage";
+import {
+  CAN_NOT_BE_EMPTY,
+  CAN_NOT_BE_LONGER_THAN_500,
+} from "../../utils/errorMessage";
 
 export const MAX_QUERY_LIMIT = 20;
 
@@ -13,24 +16,22 @@ export const MAX_QUERY_LIMIT = 20;
 };
 
 export const chatMessagesRouter = createRouter()
-    .formatError(({ shape, error }) => {
-      return {
-        ...shape,
-        data: {
-          ...shape.data,
-          zodError:
-              error.cause instanceof ZodError
-                  ? error.cause.flatten()
-                  : null,
-        }
-      };
-    })
+  .formatError(({ shape, error }) => {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.cause instanceof ZodError ? error.cause.flatten() : null,
+      },
+    };
+  })
   .query("getAll", {
     async resolve({ ctx }) {
       return await ctx.prisma.message.findMany({
         include: {
           author: true,
-          room: true
+          room: true,
         },
       });
     },
@@ -39,18 +40,19 @@ export const chatMessagesRouter = createRouter()
   .mutation("addMessage", {
     input: z.object({
       authorId: z.string(),
-      content: z.string().trim()
-          .min(1, CAN_NOT_BE_EMPTY)
-          .max(500, CAN_NOT_BE_LONGER_THAN_500),
+      content: z
+        .string()
+        .trim()
+        .min(1, CAN_NOT_BE_EMPTY)
+        .max(500, CAN_NOT_BE_LONGER_THAN_500),
       id: z.bigint(),
       isSynced: z.boolean(),
       author: z.any(),
       createdAt: z.date(),
       clientUUID: z.string(),
-      roomId: z.bigint()
+      roomId: z.bigint(),
     }),
     async resolve({ ctx, input }) {
-
       const createdMessage: Message = await ctx.prisma.message.create({
         data: {
           authorId: input.authorId,
@@ -67,7 +69,7 @@ export const chatMessagesRouter = createRouter()
           },
           include: {
             author: true,
-            room: true
+            room: true,
           },
         });
 
@@ -118,5 +120,61 @@ export const chatMessagesRouter = createRouter()
         messages,
         nextCursor: nextCursor,
       };
+    },
+  })
+
+  .query("getRandomRoom", {
+    async resolve({ ctx }) {
+      const roomCount = await ctx.prisma.room.count();
+
+      const randomRoomIndex = Math.floor(Math.random() * roomCount);
+
+      const randomRoom = await prisma?.room.findFirst({
+        skip: randomRoomIndex,
+        include: {
+          activeUsers: true,
+          owner: true,
+          admins: true,
+          messages: true,
+        },
+      });
+
+      return randomRoom as ChatRoom;
+    },
+  })
+
+  .query("createRoom", {
+    input: z.object({
+      roomName: z.string().trim().min(1, CAN_NOT_BE_EMPTY),
+      ownerId: z.string(),
+    }),
+    async resolve({ ctx, input }) {
+      let room: ChatRoom | undefined = undefined;
+
+      let aaa = await prisma?.room.create({
+        data: {
+          name: input.roomName,
+          ownerId: input.ownerId,
+        },
+        select: {
+          id: true,
+          owner: true,
+    }},);
+
+      if (!aaa?.id) {
+        return undefined;
+      }
+
+      room = {
+        id: BigInt(aaa.id),
+        name: input.roomName,
+        ownerId: aaa.owner.id,
+        owner: {...aaa.owner} ,
+        activeUsers: [],
+        admins: [],
+        messages: [],
+      }
+
+      return room;
     },
   });

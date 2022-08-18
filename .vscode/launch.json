@@ -5,16 +5,21 @@
         "name": "Next.js: debug server-side",
         "type": "node-terminal",
         "request": "launch",
-        "command": "npm run dev"
+        "command": "npm run dev",
+        "port": 12345,
+
       },
       {
         "name": "Next.js: debug client-side",
+        "port": 12345,
+
         "type": "pwa-chrome",
         "request": "launch",
         "url": "http://localhost:3000"
       },
       {
         "name": "Next.js: debug full stack",
+        "port": 12345,
         "type": "node-terminal",
         "request": "launch",
         "command": "npm run dev",
@@ -22,7 +27,7 @@
         "serverReadyAction": {
           "pattern": "started server on .+, url: (https?://.+)",
           "uriFormat": "%s",
-          "action": "debugWithChrome"
+          "action": "debugWithEdge",
         }
       }
     ]

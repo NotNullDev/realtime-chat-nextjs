@@ -2,16 +2,26 @@ import type {NextPage} from "next";
 import {useSession} from "next-auth/react";
 import {ChatComponent} from "../components/ChatComponent";
 import router from "next/router";
+import { Prisma } from "@prisma/client";
+import { useRoomStore } from "../utils/stores";
+import Center from "../components/Center";
 
 const SingInComponent = () => {
     return <div className="p-3">You are not logged in!</div>;
 };
 
-const Home: NextPage = () => {
+const RoomPage: NextPage = () => {
     const {data: session, status} = useSession();
 
+    const currentRoom = useRoomStore(state => state.currentRoom);
 
-    if (status === "loading") {
+    if ( ! currentRoom ) {
+        return <Center style="font-bold text-xl">
+            Error: room is not defined
+            </Center>
+    }
+
+    if (status === "loading" ) {
         return <div>Loading...</div>;
     }
 
@@ -30,12 +40,11 @@ const Home: NextPage = () => {
                 {/*    <EmbeddedExcalidraw/>*/}
                 {/*</div>*/}
                 <div className="flex-[1] p-4">
-                    <ChatComponent/>
+                    <ChatComponent room={currentRoom}/>
                 </div>
             </div>
         </main>
     );
 };
 
-
-export default Home;
+export default RoomPage;

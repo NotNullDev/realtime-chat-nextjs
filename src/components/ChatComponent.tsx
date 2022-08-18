@@ -1,5 +1,5 @@
 import {createRef, useEffect, useRef, useState} from "react";
-import {MessageWithAuthor} from "../types/prisma";
+import {MessageWithAuthor, ChatRoom} from "../types/prisma";
 import {trpc} from "../utils/trpc";
 import {useSession} from "next-auth/react";
 import Pusher from "pusher-js";
@@ -12,9 +12,11 @@ import ErrorMessages from "../utils/errorMessages.json";
 import {v4 as uuid} from "uuid";
 import {TRPCClientError} from "@trpc/client";
 import {ZodError} from "zod";
+import { Prisma, Room } from "@prisma/client";
 
 export type SyncedMessage = MessageWithAuthor & {
     isSynced: boolean;
+    roomId: BigInt
 };
 
 type ChatMessageResponse = {
@@ -38,21 +40,19 @@ const fetchMessages = async ({queryKey}) => {
 
     return messages as ChatMessageResponse;
 };
+
 let fetched = false;
 
-export function ChatComponent() {
+export function ChatComponent({room}: { room: ChatRoom }) {
     const {addMessage, setMessages} = useMessagesStore((state) => state);
     const messages = useMessagesStore((state) => state.messages);
     const [validationErrorMessage, setValidationErrorMessage] = useState<string>("");
-
-    const [channelName, setChannelName] = useState<string>("");
 
     const queryClient = useQueryClient();
 
     const {data: session} = useSession();
 
     const msgBox = useRef<HTMLDivElement>(null);
-
     const textArea = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
@@ -151,6 +151,7 @@ export function ChatComponent() {
                 author: session.user,
                 createdAt: new Date(),
                 clientUUID: uuid(),
+                roomId: room.id,
             } as SyncedMessage;
 
             e.target.value = "";
@@ -188,6 +189,10 @@ export function ChatComponent() {
     const inputErrorStyle = validationErrorMessage !== "" ? `input-error` : ``;
     let inputErrorMessageStyle = validationErrorMessage === "" ? `hidden` : ``;
 
+    // if(!room) {
+    //     return <div>Something went wrong...</div>;
+    // }
+
     return (
         <>
             <div className="h-full flex flex-col items-center">
@@ -196,7 +201,7 @@ export function ChatComponent() {
                     id="messages"
                 >
                     <div ref={msgBox}></div> {/* TODO: change mechanism for auto scrolling - current contains bugs*/}
-                    {messages.length == 0 ? (
+                    {messages?.length == 0 ? (
                         <div className="grid place-items-center w-full h-full">
                             <p className="">No messages to show</p>
                         </div>

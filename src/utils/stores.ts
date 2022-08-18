@@ -1,6 +1,7 @@
+import { User } from "@prisma/client";
 import create from "zustand";
 import {SyncedMessage} from "../components/ChatComponent";
-import {generators} from "openid-client";
+import { ChatRoom } from "../types/prisma";
 
 export interface MessagesStore {
     messages: SyncedMessage[];
@@ -41,22 +42,22 @@ export const useMessagesStore = create<MessagesStore>()((set) => ({
 }));
 
 export interface RoomStore {
-    roomName: string;
-    setRoomName: (newRoomName: string) => void;
+    currentRoom: ChatRoom | undefined
+    setCurrentRoom: (newRoomName: ChatRoom) => void;
 }
 
 export const useRoomStore = create<RoomStore>()( (set) => ({
-    roomName: "",
-    setRoomName: (newRoomName: string) => {
+    currentRoom: undefined,
+    setCurrentRoom: (newRoom: ChatRoom) => {
         set((state) => {
             return {
                 ...state,
-                roomName: newRoomName,
+                currentRoom: newRoom,
             };
-        });
-    },
+        }
+        );
+    }
 }));
-
 
 export interface ThemeStore {
     theme: string;
@@ -80,6 +81,38 @@ export const useThemeStore = create<ThemeStore>()((set) => ({
         })
     }
 }));
+
+
+export interface UserStore {
+    user: User | undefined;
+    anonymousUser: AnonymousUser | undefined;
+    setUser: (newUser: User) => void;
+    setAnonymousUser: (newAnonymousUser: AnonymousUser) => void;
+}
+
+export const useUserStore = create<UserStore>()((set) => ({
+    user: undefined,
+    anonymousUser:  undefined,
+    setUser: (newUser: User ) => {
+        set((state) => {
+            return {
+                ...state,
+                 user: newUser,
+            };
+        }
+        );
+    },
+    setAnonymousUser: (newAnonymousUser: AnonymousUser) => {
+        set((state) => {
+            return {
+                ...state,
+                anonymousUser: newAnonymousUser,
+            };
+        }
+        );
+    }
+}));
+
 
 export interface AnonymousUser {
     username: string;

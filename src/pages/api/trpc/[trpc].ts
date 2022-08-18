@@ -8,5 +8,6 @@ export default createNextApiHandler({
   router: appRouter,
   createContext: createContext,
   onError: ({error}) => {
+    console.error("Error handled: ", error);
   }
 });

@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import { getBaseUrl } from "../pages/_app";
 // @ts-ignore
 import { GetServerSideProps } from "next";
+import {useUserStore} from "../utils/stores";
 
 function AccountComponent({
   session,
@@ -81,6 +82,13 @@ export default function AppHeaderComponent({ csrfToken }) {
   const session = useSession();
   const router = useRouter();
 
+  const {setCurrentUser, currentUser } = useUserStore(state => {
+    return {
+      setCurrentUser: state.setUser,
+      currentUser: state.setUser
+    }
+  })
+
   const [theme, setTheme] = useState("dark");
 
   const callbackUri = getBaseUrl();
@@ -106,6 +114,21 @@ export default function AppHeaderComponent({ csrfToken }) {
   const handleSignIn = () => {
     router.push("/api/auth/signin/google");
   };
+
+  if (!currentUser && session) {
+
+    const user = session.data?.user;
+
+    if (!user) {
+      return;
+    }
+
+    console.log("User object has been initialized.", user);
+
+    setCurrentUser({
+      ...user
+    })
+  }
 
   return (
     <>

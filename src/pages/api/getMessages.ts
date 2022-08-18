@@ -10,21 +10,23 @@ import { MessageWithAuthor } from "../../types/prisma";
 const examples = async (req: NextApiRequest, res: NextApiResponse) => {
   const cursor = req.query.cursor;
 
+  let messages: MessageWithAuthor[] | undefined;
+
   if (!cursor) {
     return res.status(400).json({
       error: "Missing cursor",
     });
   }
 
-  const messages: MessageWithAuthor[] | undefined =
-    await prisma.message.findMany({
+  try {
+    messages = await prisma.message.findMany({
       include: {
         author: true,
-        room: true
+        room: true,
       },
       take: 10,
       orderBy: {
-        id: "desc"
+        id: "desc",
       },
       // where: {
       //   id: {
@@ -32,6 +34,10 @@ const examples = async (req: NextApiRequest, res: NextApiResponse) => {
       //   },
       // },
     });
+  } catch (exp) {
+    console.error(exp);
+    
+  }
 
   if (!messages) {
     return res.status(500).json({

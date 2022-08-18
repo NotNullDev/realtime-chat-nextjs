@@ -6,3 +6,16 @@ export type MessageWithAuthor = Prisma.MessageGetPayload<{
         room: true
     }
 }>
+
+export type ChatRoom = Prisma.RoomGetPayload<{
+    include: {
+        activeUsers: true,
+        admins: true,
+        owner: true,
+        messages: {
+            include: {
+                author: true,
+            }
+        }
+    }
+}>;
