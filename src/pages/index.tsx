@@ -134,7 +134,6 @@ function CreateRoomModalBody({}) {
         }, {
             onSuccess: async (data) => {
                 data = data as ChatRoom;
-                console.log(data);
                 setCurrentRoom(data);
                 await queryClient.invalidateQueries(["chatMessagesRouter.getAllRooms"]);
                 await roomManager.pushToRoom(data as ChatRoom);
@@ -251,12 +250,10 @@ const ButtonGroup = ({
 
     // Global key listeners
     useEffect(() => {
-        console.log("Adding key listener");
         document.onkeydown = onKeyDownListener;
 
         return () => {
             document.removeEventListener("keydown", onKeyDownListener);
-            console.log("removed key listener");
         };
     });
 

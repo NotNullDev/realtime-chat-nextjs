@@ -1,7 +1,7 @@
 // src/pages/api/examples.ts
-import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "../../server/prisma";
-import { MessageWithAuthor } from "../../types/prisma";
+import type {NextApiRequest, NextApiResponse} from "next";
+import {prisma} from "../../server/prisma";
+import {MessageWithAuthor} from "../../types/prisma";
 
 (BigInt.prototype as any).toJSON = function () {
   return this.toString();
@@ -28,15 +28,9 @@ const examples = async (req: NextApiRequest, res: NextApiResponse) => {
       orderBy: {
         id: "desc",
       },
-      // where: {
-      //   id: {
-      //     gt: BigInt(cursor.toString()) as any, // due to some prisma but in current version
-      //   },
-      // },
     });
   } catch (exp) {
     console.error(exp);
-    
   }
 
   if (!messages) {

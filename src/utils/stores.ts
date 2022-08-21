@@ -61,12 +61,29 @@ export interface RoomStore {
     setCurrentRoom: (newRoomName: ChatRoom) => void;
     addRawMessage: (newMessage: Message) => void;
     currentRoomMessages: SyncedMessage[],
+    setNewMessageCallback: (callback: Function) => void;
+    setChannel: (channel: Channel) => void;
+}
+
+const aa  = () => {
+    console.error("wtf!???");
 }
 
 export const useRoomStore = create<RoomStore>()((set) => ({
     currentRoom: undefined,
     currentRoomMessages: [],
     channel: undefined,
+    setChannel: (channel) => {
+        set(state => {
+            return {
+                ...state,
+                channel
+            }
+        })
+    },
+    setNewMessageCallback: (callback: Function) => {
+      // console.log("Not realy!")
+    },
     addRawMessage: (newMessage) => {
        set(state => {
 
@@ -88,6 +105,13 @@ export const useRoomStore = create<RoomStore>()((set) => ({
     setCurrentRoom: (newRoom: ChatRoom) => {
         set((state) => {
 
+                if (!newRoom) {
+                    console.error("Treind to add non-existing room");
+                    return {
+                        ...state
+                    };
+                }
+
                 if (state.channel) {
                     state.channel.unbind_all();
                     state.channel.unsubscribe();
@@ -102,15 +126,10 @@ export const useRoomStore = create<RoomStore>()((set) => ({
                 let channelName = newRoom.name;
 
                 if (newRoom.isPrivate) {
-                    channelName = "private:" + channelName;
+                    channelName = "private-" + channelName;
                 }
 
-                state.channel = pusher.subscribe(channelName);
-
-                state.channel.bind("newMessage", async function (data) {
-                    console.log("Received message from the server: ", data);
-                    state.addRawMessage(data);
-                });
+                console.log("Created subscription for channel: " + channelName);
 
                 return {
                     ...state,

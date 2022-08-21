@@ -1,7 +1,7 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, {NextAuthOptions} from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { prisma } from "../../../server/prisma";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import {prisma} from "../../../server/prisma";
+import {PrismaAdapter} from "@next-auth/prisma-adapter";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -31,8 +31,6 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async redirect(ctx) {
 
-      console.log("redirect", ctx);
-
       return ctx.url;
     },
     async jwt({ token, isNewUser, user }) {
@@ -52,8 +50,6 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
         },
       };
-
-      // console.log("Session:", session);
 
       return session;
     },

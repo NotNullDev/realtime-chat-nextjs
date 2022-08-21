@@ -4,11 +4,12 @@ import {trpc} from "../utils/trpc";
 import {useSession} from "next-auth/react";
 import {AppRouter} from "../server/router";
 import SingleMessage from "./SingleMessage";
-import {useRoomStore} from "../utils/stores";
+import {getCurrentPusherInstance, useRoomStore} from "../utils/stores";
 import ErrorMessages from "../utils/errorMessages.json";
 import {v4 as uuid} from "uuid";
 import {TRPCClientError} from "@trpc/client";
 import {usePathManager} from "../utils/hooks";
+import Pusher from "pusher-js";
 
 export type SyncedMessage = MessageWithAuthor & {
     isSynced: boolean;
@@ -43,6 +44,7 @@ export function ChatComponent() {
     const room = useRoomStore(state => state.currentRoom);
     const messages = useRoomStore(state => state.currentRoomMessages);
     const addMessage = useRoomStore(state => state.addRawMessage);
+    const setCallback = useRoomStore(state => state.setNewMessageCallback);
 
     const pathManager = usePathManager();
 
@@ -51,15 +53,29 @@ export function ChatComponent() {
     const msgBox = useRef<HTMLDivElement>(null);
     const textArea = useRef<HTMLTextAreaElement>(null);
 
+    let pusher: Pusher | null = null;
+
     useEffect(() => {
         document.addEventListener("keydown", (e) => {
-            console.log(document.activeElement);
-            console.log(textArea.current);
             if (document.activeElement !== textArea.current && e.key === "/") {
                 textArea.current?.focus();
                 e.preventDefault();
             }
+
+            const currentRoom = useRoomStore.getState().currentRoom;
+            console.log(JSON.stringify(currentRoom));
+
+            pusher = getCurrentPusherInstance();
+
+            const channel = pusher.subscribe(currentRoom?.name ?? "");
+
+            channel.bind("new-message", (msg) => {
+               console.log("OMAG!: ", msg);
+            });
         });
+
+
+
     }, []);
 
     const messageMutation = trpc.useMutation("chatMessagesRouter.addMessage");
@@ -141,6 +157,12 @@ export function ChatComponent() {
 
     const inputErrorStyle = validationErrorMessage !== "" ? `input-error` : ``;
     let inputErrorMessageStyle = validationErrorMessage === "" ? `hidden` : ``;
+
+    const onNewMessage = (message: any) => {
+        console.log("Received somthiung!! " + message);
+    }
+
+    setCallback(onNewMessage);
 
     return (
         <>
