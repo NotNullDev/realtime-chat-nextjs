@@ -1,14 +1,24 @@
 import {ChatRoom} from "../types/prisma";
 import {useRouter} from "next/router";
 
-export function useRoomManager() {
+export function usePathManager() {
     const router = useRouter();
 
-    async function push(room: ChatRoom) {
-        await router.push(`/room/${room.id}`);
+    async function pushToRoom(room: ChatRoom) {
+
+        const roomPageEndpoint = `/room/${room.id}`;
+
+        await router.push({
+            pathname: roomPageEndpoint
+        }, roomPageEndpoint);
+    }
+
+    async function pushToLogin() {
+        await router.push("/");
     }
 
     return {
-        push
+        pushToRoom,
+        pushToLogin
     }
 }

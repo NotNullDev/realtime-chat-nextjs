@@ -1,18 +1,14 @@
-import {createRef, useEffect, useRef, useState} from "react";
-import {MessageWithAuthor, ChatRoom} from "../types/prisma";
+import {useEffect, useRef, useState} from "react";
+import {MessageWithAuthor} from "../types/prisma";
 import {trpc} from "../utils/trpc";
 import {useSession} from "next-auth/react";
-import Pusher from "pusher-js";
-import {TRPCContextState} from "@trpc/react/src/internals/context";
 import {AppRouter} from "../server/router";
 import SingleMessage from "./SingleMessage";
-import {useQueryClient} from "react-query";
-import {useMessagesStore} from "../utils/stores";
+import {useRoomStore} from "../utils/stores";
 import ErrorMessages from "../utils/errorMessages.json";
 import {v4 as uuid} from "uuid";
 import {TRPCClientError} from "@trpc/client";
-import {ZodError} from "zod";
-import { Prisma, Room } from "@prisma/client";
+import {usePathManager} from "../utils/hooks";
 
 export type SyncedMessage = MessageWithAuthor & {
     isSynced: boolean;
@@ -41,14 +37,14 @@ const fetchMessages = async ({queryKey}) => {
     return messages as ChatMessageResponse;
 };
 
-let fetched = false;
-
-export function ChatComponent({room}: { room: ChatRoom }) {
-    const {addMessage, setMessages} = useMessagesStore((state) => state);
-    const messages = useMessagesStore((state) => state.messages);
+export function ChatComponent() {
     const [validationErrorMessage, setValidationErrorMessage] = useState<string>("");
 
-    const queryClient = useQueryClient();
+    const room = useRoomStore(state => state.currentRoom);
+    const messages = useRoomStore(state => state.currentRoomMessages);
+    const addMessage = useRoomStore(state => state.addRawMessage);
+
+    const pathManager = usePathManager();
 
     const {data: session} = useSession();
 
@@ -66,59 +62,15 @@ export function ChatComponent({room}: { room: ChatRoom }) {
         });
     }, []);
 
-    useEffect(() => {
-        scrollIntoView(msgBox);
-    }, [msgBox]);
-
-    useEffect(() => {
-        if (messages.length === 0 && !fetched) {
-            fetched = true;
-            console.log("Fetching initial messages");
-            queryClient
-                .fetchQuery(["fetchMessages", 2], fetchMessages)
-                .then((data) => {
-                    const syncedMessages: SyncedMessage[] = data.messages.map((msg) => {
-                        const syncedMessage = msg as SyncedMessage;
-                        syncedMessage.isSynced = true;
-                        return syncedMessage;
-                    })
-                    setMessages(syncedMessages);
-                    console.log("Fetched initial messages!", data);
-                })
-                .catch((e) => console.log(e));
-        }
-        if (Pusher.instances.length >= 1) {
-            return;
-        }
-        Pusher.logToConsole = false;
-
-        const pusher = new Pusher("266ceafac0f9727d92b7", {
-            cluster: "eu",
-        });
-
-        const channel = pusher.subscribe("chat");
-
-        channel.bind("newMessage", async function (data) {
-            console.log("Received message from the server: ", data);
-            addMessage(data);
-            scrollIntoView(msgBox);
-        });
-    });
-
     const messageMutation = trpc.useMutation("chatMessagesRouter.addMessage");
-    const deleteAllMsgMutation = trpc.useMutation("chatMessagesRouter.deleteAll");
 
-    const clearMessages = (
-        trpcContextState: TRPCContextState<AppRouter, unknown>
-    ) => {
-        deleteAllMsgMutation.mutateAsync(null, {
-            onSuccess: () => {
-                trpcContextState.invalidateQueries("chatMessagesRouter.getAll");
-                alert("OMG WHERE ARE ALL THE MESSAGES? 🤔");
-            },
-            onError: () => errorHandler(),
-        });
-    };
+    // HOOKS END
+
+    if (!room) { // if error will occur try this: return redirecting, and check in useState if there is room, if not, then redirect
+        console.error("Current room is not defined!");
+        pathManager.pushToLogin();
+        return <div>Redirecting...</div>
+    }
 
     const messageTextChangeHandler = (e: any) => {
         if (e.key.toLowerCase() !== "enter") {
@@ -152,13 +104,17 @@ export function ChatComponent({room}: { room: ChatRoom }) {
                 createdAt: new Date(),
                 clientUUID: uuid(),
                 roomId: room.id,
+                room: room
             } as SyncedMessage;
 
             e.target.value = "";
             addMessage(message);
 
             try {
-                messageMutation.mutateAsync(message, {
+                messageMutation.mutateAsync({
+                    ...message,
+                    roomId: message.roomId.toString()
+                }, {
                     onSuccess: () => {
                         console.log("Message sent!");
                     },
@@ -171,15 +127,12 @@ export function ChatComponent({room}: { room: ChatRoom }) {
                         setValidationErrorMessage(errorMessage);
                     }
                 }).catch(e => {
-
+                    console.error(e);
                 })
             } catch (e) {
-
+                console.error(e);
             }
-
         }
-
-
     };
 
     if (!session?.user) {
@@ -189,10 +142,6 @@ export function ChatComponent({room}: { room: ChatRoom }) {
     const inputErrorStyle = validationErrorMessage !== "" ? `input-error` : ``;
     let inputErrorMessageStyle = validationErrorMessage === "" ? `hidden` : ``;
 
-    // if(!room) {
-    //     return <div>Something went wrong...</div>;
-    // }
-
     return (
         <>
             <div className="h-full flex flex-col items-center">
@@ -200,7 +149,8 @@ export function ChatComponent({room}: { room: ChatRoom }) {
                     className="h-[65vh] w-full card shadow-xl p-3 flex flex-col-reverse overflow-y-scroll"
                     id="messages"
                 >
-                    <div ref={msgBox}></div> {/* TODO: change mechanism for auto scrolling - current contains bugs*/}
+                    <div ref={msgBox}></div>
+                    {/* TODO: change mechanism for auto scrolling - current contains bugs*/}
                     {messages?.length == 0 ? (
                         <div className="grid place-items-center w-full h-full">
                             <p className="">No messages to show</p>
@@ -239,3 +189,18 @@ const scrollIntoView = (element: any) => {
 function errorHandler() {
     alert("😯😯😯😯😯😯 Error! 😯😯😯😯😯😯");
 }
+
+
+// const deleteAllMsgMutation = trpc.useMutation("chatMessagesRouter.deleteAll");
+//
+// const clearMessages = (
+//     trpcContextState: TRPCContextState<AppRouter, unknown>
+// ) => {
+//     deleteAllMsgMutation.mutateAsync(null, {
+//         onSuccess: () => {
+//             trpcContextState.invalidateQueries("chatMessagesRouter.getAll");
+//             alert("OMG WHERE ARE ALL THE MESSAGES? 🤔");
+//         },
+//         onError: () => errorHandler(),
+//     });
+// };

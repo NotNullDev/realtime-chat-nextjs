@@ -1,4 +1,4 @@
-import {Message} from "@prisma/client";
+import {Message, Prisma} from "@prisma/client";
 import {z, ZodError} from "zod";
 import {ChatRoom, MessageWithAuthor} from "../../types/prisma";
 
@@ -46,32 +46,47 @@ export const chatMessagesRouter = createRouter()
       author: z.any(),
       createdAt: z.date(),
       clientUUID: z.string(),
-      roomId: z.bigint(),
+      roomId: z.string(),
     }),
     async resolve({ ctx, input }) {
-      const createdMessage: Message = await ctx.prisma.message.create({
-        data: {
-          authorId: input.authorId,
-          content: input.content,
-          clientUUID: input.clientUUID,
-          roomId: input.roomId,
-        } as Message,
-      });
 
-      const messageWithAuthor: MessageWithAuthor =
-        await ctx.prisma.message.findFirst({
-          where: {
-            id: createdMessage.id,
-          },
-          include: {
-            author: true,
-            room: true,
-          },
+      let msgWithAuthor: undefined | MessageWithAuthor = undefined;
+
+      try {
+        msgWithAuthor = await prisma?.$transaction(async (prisma: Prisma.TransactionClient) => { // TODO: add error handling in frontend
+
+          // 1. Create message in db
+          const createdMessage: Message = await prisma.message.create({
+            data: {
+              authorId: input.authorId,
+              content: input.content,
+              clientUUID: input.clientUUID,
+              roomId: BigInt(input.roomId),
+            } as Message,
+          });
+
+          // Get additional data from database (TODO: optimize)
+          const messageWithAuthor: MessageWithAuthor =
+              await ctx.prisma.message.findFirst({
+                where: {
+                  id: createdMessage.id,
+                },
+                include: {
+                  author: true,
+                  room: true,
+                },
+              });
+
+          // Send new message to the other users
+          await ctx.pusher.trigger("chat", "newMessage", messageWithAuthor);
+
+          return messageWithAuthor;
         });
+      } catch (err) {
+        console.error(err);
+      }
 
-      await ctx.pusher.trigger("chat", "newMessage", messageWithAuthor);
-
-      return messageWithAuthor;
+      return msgWithAuthor;
     },
   })
 
@@ -186,7 +201,11 @@ export const chatMessagesRouter = createRouter()
                 owner: true,
                 admins: true,
                 messages: true
-            }});
+            },
+            where: {
+              isPrivate: false
+          }
+        });
 
         return allRooms;
         }

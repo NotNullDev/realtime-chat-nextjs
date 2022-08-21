@@ -21,15 +21,6 @@ openssl rand -base64 32
 
 ```
 
-## Supabase
-
-```shell
-# init
-supabase init
-# run locally (docker images)
-supabase start
-```
-
 ## Used technologies
 
 - [DaisyUI](https://daisyui.com/)
@@ -54,7 +45,7 @@ supabase start
 - [x] Add private rooms support
 - [ ] Add 
 - [ ] Add tests
-
+- [ ] Optimize application (reduce bundle size, introduce dynamic imports) 
 - [ ] Add live collaboration support to the exaclidraw
 
 # Bugs

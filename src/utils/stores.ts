@@ -1,7 +1,21 @@
-import {User} from "@prisma/client";
+import {Message, User} from "@prisma/client";
 import create from "zustand";
 import {SyncedMessage} from "../components/ChatComponent";
 import {ChatRoom} from "../types/prisma";
+import Pusher, {Channel} from "pusher-js";
+
+export const getCurrentPusherInstance = () => {
+    let pusher = Pusher.instances[0];
+
+    if (!pusher) {
+        Pusher.logToConsole = false;
+        pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY || "", {
+            cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "eu",
+        })
+    }
+
+    return pusher;
+}
 
 export interface MessagesStore {
     messages: SyncedMessage[];
@@ -43,18 +57,66 @@ export const useMessagesStore = create<MessagesStore>()((set) => ({
 
 export interface RoomStore {
     currentRoom: ChatRoom | undefined
+    channel: Channel | undefined;
     setCurrentRoom: (newRoomName: ChatRoom) => void;
+    addRawMessage: (newMessage: Message) => void;
+    currentRoomMessages: SyncedMessage[],
 }
 
-export const useRoomStore = create<RoomStore>()( (set) => ({
+export const useRoomStore = create<RoomStore>()((set) => ({
     currentRoom: undefined,
-    setCurrentRoom: (newRoom: ChatRoom) => {
-        set((state) => {
+    currentRoomMessages: [],
+    channel: undefined,
+    addRawMessage: (newMessage) => {
+       set(state => {
+
+           const newMessages = state.currentRoomMessages.filter(msg => msg.clientUUID != newMessage.clientUUID);
+
+           let newMessageSynced = {
+               ...newMessage,
+               isSynced: true
+           } as SyncedMessage
+
+           newMessages.push(newMessageSynced);
+
             return {
                 ...state,
-                currentRoom: newRoom,
-            };
-        }
+                newMessages
+            }
+        })
+    },
+    setCurrentRoom: (newRoom: ChatRoom) => {
+        set((state) => {
+
+                if (state.channel) {
+                    state.channel.unbind_all();
+                    state.channel.unsubscribe();
+                }
+
+                const pusher = getCurrentPusherInstance();
+
+                if (!pusher) {
+                    throw new Error("Pusher can not be initialized!");
+                }
+
+                let channelName = newRoom.name;
+
+                if (newRoom.isPrivate) {
+                    channelName = "private:" + channelName;
+                }
+
+                state.channel = pusher.subscribe(channelName);
+
+                state.channel.bind("newMessage", async function (data) {
+                    console.log("Received message from the server: ", data);
+                    state.addRawMessage(data);
+                });
+
+                return {
+                    ...state,
+                    currentRoom: newRoom,
+                };
+            }
         );
     }
 }));
@@ -82,6 +144,9 @@ export const useThemeStore = create<ThemeStore>()((set) => ({
     }
 }));
 
+export interface AnonymousUser {
+    username: string;
+}
 
 export interface UserStore {
     user: User | undefined;
@@ -95,83 +160,22 @@ export const useUserStore = create<UserStore>()((set) => ({
     anonymousUser: {
         username: "RandomBalunga35"
     },
-    setUser: (newUser: User ) => {
+    setUser: (newUser: User) => {
         set((state) => {
-            return {
-                ...state,
-                 user: newUser,
-            };
-        }
+                return {
+                    ...state,
+                    user: newUser,
+                };
+            }
         );
     },
     setAnonymousUser: (newAnonymousUser: AnonymousUser) => {
         set((state) => {
-            return {
-                ...state,
-                anonymousUser: newAnonymousUser,
-            };
-        }
+                return {
+                    ...state,
+                    anonymousUser: newAnonymousUser,
+                };
+            }
         );
     }
 }));
-
-
-export interface AnonymousUser {
-    username: string;
-}
-
-export const useAnonymousUserStore = create<AnonymousUser>()((set) => ({
-    username: "RandomBalunga35",
-    setUsername: (username: string) => {
-        set((state) => {
-            return {
-                ...state,
-                username
-            };
-        });
-    }
-}));
-
-
-// interface PusherStore {
-//   pusher: Pusher;
-//   messageChannel: Channel;
-// }
-
-// const usePusherStore = create<PusherStore>((state) => {
-//   if (process.env.NODE_ENV === "development") {
-//     Pusher.logToConsole = true;
-//   }
-
-//   const appKey = process.env.NEXT_PUBLIC_PUSHER_ID ?? "";
-
-//   if (appKey === "") {
-//     throw new Error("PUSHER_ID is not set");
-//   }
-
-//   const pusher = new Pusher(appKey, {
-//     cluster: process.env.NEXT_PUBLIC_Pusher_CLUSTER ?? "",
-//   });
-
-//   if (process.env.NODE_ENV === "development") {
-//     console.log("Created pusher with appKey:", appKey);
-//     pusher.connection.bind("connected", () => {
-//       console.log("[client] Pusher connected");
-//     });
-//     pusher.connection.bind("disconnected", () => {
-//       console.log("[client] Pusher disconnected");
-//     });
-//   }
-
-//   const channel = pusher.subscribe("chat");
-//   channel.bind("newMessage", (data: any) => {
-//     console.log("[client] Icomming message from the channel 'chat': ", data);
-//   });
-
-//   return {
-//     pusher,
-//     messageChannel: channel,
-//   };
-// });
-
-// export default usePusherStore;

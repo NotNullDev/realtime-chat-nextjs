@@ -5,7 +5,7 @@ import {trpc} from "../utils/trpc";
 import {ChatRoom} from "../types/prisma";
 import {useSession} from "next-auth/react";
 import {useRouter} from "next/router";
-import {useRoomManager} from "../utils/hooks";
+import {usePathManager} from "../utils/hooks";
 
 export interface ActiveChannel {
     channelName: string;
@@ -20,10 +20,10 @@ export const SinglePublicChannelPreview = ({
     room: ChatRoom
 }) => {
 
-    const roomManager = useRoomManager();
+    const roomManager = usePathManager();
 
     const join = async () => {
-        await roomManager.push(room);
+        await roomManager.pushToRoom(room);
     }
 
     return (
@@ -115,7 +115,7 @@ function CreateRoomModalBody({}) {
     const queryClient = trpc.useContext();
     const router = useRouter();
 
-    const roomManager = useRoomManager();
+    const roomManager = usePathManager();
 
     const roomName = useRef("");
 
@@ -137,7 +137,7 @@ function CreateRoomModalBody({}) {
                 console.log(data);
                 setCurrentRoom(data);
                 await queryClient.invalidateQueries(["chatMessagesRouter.getAllRooms"]);
-                await roomManager.push(data as ChatRoom);
+                await roomManager.pushToRoom(data as ChatRoom);
             },
         });
     };
@@ -231,7 +231,7 @@ const ButtonGroup = ({
 
     const [modalBody, setModalBody] = useState("changeName");
 
-    const router = useRouter();
+    const roomManager = usePathManager();
 
     const [tempUsername, setTempUsername] = useState(username);
     const randomRoom = trpc.useQuery(["chatMessagesRouter.getRandomRoom"]);
@@ -282,10 +282,10 @@ const ButtonGroup = ({
     };
 
     const joinRandomRoom = async () => {
-        if (randomRoom.status === "success") {
-            await router.push(`room/${randomRoom?.data.id}`)
+        if (randomRoom.status === "success" && randomRoom) {
+            await roomManager.pushToRoom(randomRoom.data);
         } else {
-            console.error("Error: randomRoom is null.");
+            alert("Error: randomRoom is null.");
         }
     };
 
@@ -357,18 +357,9 @@ const ButtonGroup = ({
 };
 
 export default function Index() {
-
     const session = useSession();
 
-    const [rooms, setRooms] = useState<ChatRoom[]>([]);
-
-    const allRoomsQuery = trpc.useQuery(["chatMessagesRouter.getAllRooms"], {
-        // onSuccess: (allRooms: ChatRoom[]) => {
-        //
-        //     setRooms(allRooms);
-        // }
-    })
-
+    const allRoomsQuery = trpc.useQuery(["chatMessagesRouter.getAllRooms"])
 
     const setCurrentRoom = useRoomStore((store) => store.setCurrentRoom);
 
@@ -414,7 +405,6 @@ export default function Index() {
     }
 
     console.log(allRoomsQuery.data)
-
 
     return (
         <div className="flex flex-col flex-1 justify-start mt-12 items-center">

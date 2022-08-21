@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import {useEffect, useState} from "react";
 import {useRouter} from "next/router";
-import {getBaseUrl} from "../pages/_app";
 // @ts-ignore
 import {GetServerSideProps} from "next";
 import {useUserStore} from "../utils/stores";
@@ -17,7 +16,6 @@ function AccountComponent({
     csrfToken: string;
     callbackUri: string;
 }) {
-
     const unAuthUser = useUserStore(state => state.anonymousUser);
 
     return (
@@ -95,8 +93,6 @@ export default function AppHeaderComponent({csrfToken}) {
 
     const [theme, setTheme] = useState("dark");
 
-    const callbackUri = getBaseUrl();
-
     const toggleTheme = () => {
         let newTheme = theme === "dark" ? "aqua" : "dark";
         document.querySelector("html")?.setAttribute("data-theme", newTheme);
@@ -115,10 +111,6 @@ export default function AppHeaderComponent({csrfToken}) {
         setTheme(savedTheme);
     }, []);
 
-    const handleSignIn = () => {
-        router.push("/api/auth/signin/google");
-    };
-
     return (
         <>
             <div className="navbar bg-base-100 w-full flex justify-between">
@@ -126,7 +118,6 @@ export default function AppHeaderComponent({csrfToken}) {
                     <a className="btn btn-ghost normal-case text-xl">Chat</a>
                 </Link>
                 <AccountComponent
-                    // @ts-ignore
                     session={session}
                     csrfToken={csrfToken}
                     callbackUri="/api/auth/signin/google"

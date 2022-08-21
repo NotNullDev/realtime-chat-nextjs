@@ -1,13 +1,16 @@
 // src/pages/_app.tsx
-import { withTRPC } from "@trpc/next";
-import type { AppRouter } from "../server/router";
-import type { AppType } from "next/dist/shared/lib/utils";
+import {withTRPC} from "@trpc/next";
+import type {AppRouter} from "../server/router";
+import type {AppType} from "next/dist/shared/lib/utils";
 import superjson from "superjson";
 import "../styles/globals.css";
 import {getCsrfToken, SessionProvider} from "next-auth/react";
 import AppHeader from "../components/AppHeader";
 // @ts-ignore
 import {GetServerSideProps} from "next";
+
+// @ts-ignore
+BigInt.prototype.toJSON = function() { return this.toString() }
 
 export let appWs: WebSocket | null = null;
 
