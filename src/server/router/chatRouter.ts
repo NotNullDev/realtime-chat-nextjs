@@ -1,13 +1,9 @@
-import { Message, Room } from "@prisma/client";
-import { z, ZodError } from "zod";
-import { SyncedMessage } from "../../components/ChatComponent";
-import { ChatRoom, MessageWithAuthor } from "../../types/prisma";
+import {Message} from "@prisma/client";
+import {z, ZodError} from "zod";
+import {ChatRoom, MessageWithAuthor} from "../../types/prisma";
 
-import { createRouter } from "./trpcContext";
-import {
-  CAN_NOT_BE_EMPTY,
-  CAN_NOT_BE_LONGER_THAN_500,
-} from "../../utils/errorMessage";
+import {createRouter} from "./trpcContext";
+import {CAN_NOT_BE_EMPTY, CAN_NOT_BE_LONGER_THAN_500,} from "../../utils/errorMessage";
 
 export const MAX_QUERY_LIMIT = 20;
 
@@ -90,7 +86,7 @@ export const chatMessagesRouter = createRouter()
       limit: z.number().min(1).max(MAX_QUERY_LIMIT),
       cursor: z.number().nullish(),
     }),
-    async resolve({ ctx, input }) {
+    async resolve({ input }) {
       const limit = input.limit ?? MAX_QUERY_LIMIT;
 
       let { cursor } = input;
@@ -143,18 +139,20 @@ export const chatMessagesRouter = createRouter()
     },
   })
 
-  .query("createRoom", {
+  .mutation("createRoom", {
     input: z.object({
       roomName: z.string().trim().min(1, CAN_NOT_BE_EMPTY),
       ownerId: z.string(),
+      isPrivate: z.boolean()
     }),
-    async resolve({ ctx, input }) {
+    async resolve({ input }) {
       let room: ChatRoom | undefined = undefined;
 
       let aaa = await prisma?.room.create({
         data: {
           name: input.roomName,
           ownerId: input.ownerId,
+          isPrivate: input.isPrivate,
         },
         select: {
           id: true,
@@ -170,6 +168,7 @@ export const chatMessagesRouter = createRouter()
         name: input.roomName,
         ownerId: aaa.owner.id,
         owner: {...aaa.owner} ,
+        isPrivate: input.isPrivate,
         activeUsers: [],
         admins: [],
         messages: [],
@@ -177,4 +176,44 @@ export const chatMessagesRouter = createRouter()
 
       return room;
     },
-  });
+  })
+    .query("getAllRooms", { // TODO: replace with infinite query
+        async resolve({ ctx }) {
+
+        const allRooms = await prisma?.room.findMany({
+            include: {
+                activeUsers: true,
+                owner: true,
+                admins: true,
+                messages: true
+            }});
+
+        return allRooms;
+        }
+    })
+    .mutation("verifyPrivateRoom", {
+      input: z.object({
+          roomName: z.string().trim().min(1, CAN_NOT_BE_EMPTY),
+          privateKey: z.string().trim().min(1, CAN_NOT_BE_EMPTY),
+      }),
+        async resolve({ ctx, input }) {
+
+          const requestedRoom = await prisma?.room.findFirst({
+            select: {
+              name: true,
+              privateKey: true, // TODO: add index on privateKey?, rename to privateKeys
+            },
+            where: {
+              name: input.roomName,
+            }
+          });
+
+          if (requestedRoom) {
+            if (requestedRoom.privateKey.find(key => key.key === input.privateKey)) {
+                return true;
+            }
+          }
+
+          return  false;
+        }
+    });

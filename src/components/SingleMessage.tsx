@@ -1,6 +1,4 @@
-import {Message, User} from "@prisma/client";
-import {useSession} from "next-auth/react";
-import {MessageWithAuthor} from "../types/prisma";
+import {User} from "@prisma/client";
 import {SyncedMessage} from "./ChatComponent";
 
 const SingleMessage = ({message, currentUser}: { message: SyncedMessage, currentUser: User }) => {

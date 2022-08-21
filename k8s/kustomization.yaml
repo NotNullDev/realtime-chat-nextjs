@@ -1,0 +1,30 @@
+namespace: realtime-chat
+
+resources:
+  - mysql/deployment.yaml
+  - mysql/service.yaml
+  - soketi/deployment.yaml
+  - soketi/service.yaml
+  - test.yaml
+
+secretGenerator:
+  - name: mysql-soketi-secret
+    envs:
+      - secrets/mysql.txt
+  - name: soketi-secret
+    envs:
+      - secrets/soketi.txt
+
+configMapGenerator:
+  - name: init-socketio-mysql
+    files:
+      - env/init.sql
+
+commonAnnotations:
+  metallb.universe.tf/allow-shared-ip: "soketi-app-ip-1"
+  metallb.universe.tf/loadBalancerIPs: 192.168.0.254
+
+
+labels:
+  - pairs:
+      app: realtime-chat

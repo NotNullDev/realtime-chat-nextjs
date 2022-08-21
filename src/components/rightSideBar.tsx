@@ -1,7 +1,8 @@
 import {useRef} from "react";
-import {ActiveChannel, SinglePublicChannelPreview} from "../pages";
+import {SinglePublicChannelPreview} from "../pages";
+import {ChatRoom} from "../types/prisma";
 
-export const RightSideBar = ({activeChannels}: { activeChannels: ActiveChannel[] }) => {
+export const RightSideBar = ({activeChannels}: { activeChannels: ChatRoom[] }) => {
 
     const searchBarRef = useRef<HTMLInputElement>(null);
 
@@ -38,8 +39,9 @@ export const RightSideBar = ({activeChannels}: { activeChannels: ActiveChannel[]
             <div className="flex flex-wrap items-center justify-center min-w-[320px]">
                 {
                     activeChannels.map((activeChannel, index) => {
-                        return (<SinglePublicChannelPreview key={index} channelName={activeChannel.channelName}
-                                                            activeUsers={activeChannel.activeUsers}/>);
+                        return (<SinglePublicChannelPreview key={index} channelName={activeChannel.name}
+                                                           room={activeChannel}
+                        />);
                     })
                 }
             </div>

@@ -48,10 +48,11 @@ supabase start
 - [x] Add excalidraw to the site
 - [ ] Add channels
 - [ ] Add User profile
-- [ ] Add anonymous user support
+- [x] Add anonymous user support
 - [ ] Add user avatar support
 - [ ] Add option to resize canvas to chat ratio in the room
-- [ ] Add private rooms support
+- [x] Add private rooms support
+- [ ] Add 
 - [ ] Add tests
 
 - [ ] Add live collaboration support to the exaclidraw

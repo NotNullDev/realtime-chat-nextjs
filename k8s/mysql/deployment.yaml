@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-soketi
+  labels:
+    app: mysql-soketi
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: mysql-soketi
+      labels:
+        app: mysql-soketi
+    spec:
+      volumes:
+        - name: init
+          configMap:
+            name: init-socketio-mysql
+            optional: false
+      containers:
+        - name: mysql-soketi
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3306
+              hostPort: 3306
+          envFrom:
+            - secretRef:
+                name: mysql-soketi-secret
+                optional: false
+          volumeMounts:
+            - mountPath: /docker-entrypoint-initdb.d
+              name: init
+      restartPolicy: Always
+  selector:
+    matchLabels:
+      app: mysql-soketi

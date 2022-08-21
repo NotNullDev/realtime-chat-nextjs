@@ -1,7 +1,7 @@
-import { User } from "@prisma/client";
+import {User} from "@prisma/client";
 import create from "zustand";
 import {SyncedMessage} from "../components/ChatComponent";
-import { ChatRoom } from "../types/prisma";
+import {ChatRoom} from "../types/prisma";
 
 export interface MessagesStore {
     messages: SyncedMessage[];
@@ -85,14 +85,16 @@ export const useThemeStore = create<ThemeStore>()((set) => ({
 
 export interface UserStore {
     user: User | undefined;
-    anonymousUser: AnonymousUser | undefined;
+    anonymousUser: AnonymousUser;
     setUser: (newUser: User) => void;
     setAnonymousUser: (newAnonymousUser: AnonymousUser) => void;
 }
 
 export const useUserStore = create<UserStore>()((set) => ({
     user: undefined,
-    anonymousUser:  undefined,
+    anonymousUser: {
+        username: "RandomBalunga35"
+    },
     setUser: (newUser: User ) => {
         set((state) => {
             return {
@@ -116,7 +118,6 @@ export const useUserStore = create<UserStore>()((set) => ({
 
 export interface AnonymousUser {
     username: string;
-    setUsername: (username: string) => void;
 }
 
 export const useAnonymousUserStore = create<AnonymousUser>()((set) => ({
