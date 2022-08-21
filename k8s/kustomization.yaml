@@ -3,6 +3,7 @@ namespace: realtime-chat
 resources:
   - mysql/deployment.yaml
   - mysql/service.yaml
+  - mysql/pvc.yaml
   - soketi/deployment.yaml
   - soketi/service.yaml
   - test.yaml
