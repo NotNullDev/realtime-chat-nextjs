@@ -59,13 +59,14 @@ export interface RoomStore {
     currentRoom: ChatRoom | undefined
     channel: Channel | undefined;
     setCurrentRoom: (newRoomName: ChatRoom) => void;
-    addRawMessage: (newMessage: Message) => void;
+    addRawMessage: (newMessage: Message, synced?: boolean) => void;
     currentRoomMessages: SyncedMessage[],
     setNewMessageCallback: (callback: Function) => void;
     setChannel: (channel: Channel) => void;
+    setMessages: (messages: SyncedMessage[]) => void;
 }
 
-const aa  = () => {
+const aa = () => {
     console.error("wtf!???");
 }
 
@@ -73,6 +74,15 @@ export const useRoomStore = create<RoomStore>()((set) => ({
     currentRoom: undefined,
     currentRoomMessages: [],
     channel: undefined,
+    setMessages: (messages) => {
+        messages = messages.reverse();
+
+        set(state => {
+            return {
+                currentRoomMessages: [...messages]
+            }
+        }, true);
+    },
     setChannel: (channel) => {
         set(state => {
             return {
@@ -82,23 +92,22 @@ export const useRoomStore = create<RoomStore>()((set) => ({
         })
     },
     setNewMessageCallback: (callback: Function) => {
-      // console.log("Not realy!")
+        // console.log("Not really!")
     },
-    addRawMessage: (newMessage) => {
-       set(state => {
+    addRawMessage: (newMessage,synced =  true) => {
+        set(state => {
+            let newMessages = state.currentRoomMessages.filter(msg => msg.clientUUID != newMessage.clientUUID);
 
-           const newMessages = state.currentRoomMessages.filter(msg => msg.clientUUID != newMessage.clientUUID);
+            let newMessageSynced = {
+                ...newMessage,
+                isSynced: synced
+            } as SyncedMessage
 
-           let newMessageSynced = {
-               ...newMessage,
-               isSynced: true
-           } as SyncedMessage
-
-           newMessages.push(newMessageSynced);
+            newMessages = [newMessageSynced, ...newMessages];
 
             return {
                 ...state,
-                newMessages
+                currentRoomMessages: [...newMessages]
             }
         })
     },
@@ -115,6 +124,7 @@ export const useRoomStore = create<RoomStore>()((set) => ({
                 if (state.channel) {
                     state.channel.unbind_all();
                     state.channel.unsubscribe();
+                    console.log("Unsubscribed from channel " + state.channel.name);
                 }
 
                 const pusher = getCurrentPusherInstance();
@@ -129,11 +139,34 @@ export const useRoomStore = create<RoomStore>()((set) => ({
                     channelName = "private-" + channelName;
                 }
 
-                console.log("Created subscription for channel: " + channelName);
+                let channel = pusher.channel(channelName)
+
+                if (!channel) {
+                    channel = pusher.subscribe(channelName);
+                }
+
+                channel.unbind("new-message");
+
+                channel.bind("new-message", (msg) => {
+                    useRoomStore.getState().addRawMessage(msg);
+                });
+
+                console.log("Subscribed to channel " + channel.name);
+
+                let syncedMessages = newRoom.messages.map(msg => {
+                    return {
+                        ...msg,
+                        isSynced: true
+                    } as SyncedMessage;
+                })
+
+                syncedMessages = syncedMessages.reverse();
 
                 return {
                     ...state,
                     currentRoom: newRoom,
+                    channel,
+                    currentRoomMessages: syncedMessages
                 };
             }
         );

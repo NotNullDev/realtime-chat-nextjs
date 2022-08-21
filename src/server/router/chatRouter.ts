@@ -49,7 +49,6 @@ export const chatMessagesRouter = createRouter()
             roomId: z.string(),
         }),
         async resolve({ctx, input}) {
-
             let messageWithAuthor: undefined | MessageWithAuthor = undefined;
 
             try {
@@ -63,19 +62,18 @@ export const chatMessagesRouter = createRouter()
                     } as Message,
                     include: {
                         author: true,
-                        room: true
+                        room: true,
                     }
                 });
 
                 // Get additional data from database (TODO: optimize)
-
                 if (!createdMessage) {
                     return;
                 }
 
                 messageWithAuthor = {
                     ...createdMessage,
-                    id: BigInt(createdMessage?.id ?? "-1"),
+                    id: BigInt(createdMessage?.id ?? "-1")
                 }
             } catch (err) {
                 console.error(err);
@@ -183,11 +181,11 @@ export const chatMessagesRouter = createRouter()
                 select: {
                     id: true,
                     owner: true,
-                }
+                },
             },);
 
-            if (!aaa?.id) {
-                return undefined;
+            if (!aaa?.id || !aaa?.owner) {
+                throw new Error("Something went wrong while creating room...");
             }
 
             room = {
@@ -212,7 +210,11 @@ export const chatMessagesRouter = createRouter()
                     activeUsers: true,
                     owner: true,
                     admins: true,
-                    messages: true
+                    messages: {
+                        include: {
+                            author: true
+                        }
+                    }
                 },
                 where: {
                     isPrivate: false

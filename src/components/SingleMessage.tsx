@@ -13,7 +13,6 @@ const SingleMessage = ({message, currentUser}: { message: SyncedMessage, current
 
     const heightInPx = 50;
 
-
     if (message.author == null) {
         return <div>Error! Author is null. </div>
     }

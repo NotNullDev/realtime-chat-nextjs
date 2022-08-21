@@ -127,6 +127,14 @@ function CreateRoomModalBody({}) {
             return;
         }
 
+        // create regex that passes alfabetic characters and following signs: _ - = @ , . ;
+        const roomNameRegex = /^[a-zA-Z0-9_\-=@,.;]+$/;
+
+        if (!roomName.current.match(roomNameRegex)) {
+            console.log("Invalid room name");
+            return;
+        }
+
         createRoomMutation.mutate({
             ownerId: currentUser.id,
             roomName: roomName.current,
@@ -359,6 +367,8 @@ export default function Index() {
     const allRoomsQuery = trpc.useQuery(["chatMessagesRouter.getAllRooms"])
 
     const setCurrentRoom = useRoomStore((store) => store.setCurrentRoom);
+    const currentUser = useUserStore((state) => state.user);
+    const setCurrentUser = useUserStore((state) => state.setUser);
 
     const {username, setUsername} = useUserStore((state) => {
         return {
@@ -367,41 +377,36 @@ export default function Index() {
         };
     });
 
-    trpc.useQuery(["chatMessagesRouter.getRandomRoom"], {
-        onSuccess: (data: ChatRoom) => {
-            setCurrentRoom(data);
-        },
-    });
+    trpc.useQuery(["chatMessagesRouter.getRandomRoom"]);
 
-    const currentUser = useUserStore((state) => state.user);
-    const setCurrentUser = useUserStore((state) => state.setUser);
+    useEffect(() => {
+        const userNow = session?.data?.user;
+
+        if (!currentUser && userNow) {
+            setCurrentUser({
+                ...userNow
+            })
+        }
+    }, [])
+
+    // HOOKS END
 
     if (!currentUser && session && session.status != "loading" && session.status == "authenticated") {
 
         const user = session.data?.user;
 
         if (!user) {
-            return;
+            return <div>Loading...</div>;
         }
-
-        console.log("User object has been initialized.", user);
-
-        setCurrentUser({
-            ...user
-        })
-    } else {
-        console.log("Not initialized yet.", session);
     }
 
     if (allRoomsQuery.status === "loading") {
         return <div>Loading...</div>
     }
 
-    if(allRoomsQuery.status === "error" || !allRoomsQuery.data) {
+    if (allRoomsQuery.status === "error" || !allRoomsQuery.data) {
         return <div>Error</div>
     }
-
-    console.log(allRoomsQuery.data)
 
     return (
         <div className="flex flex-col flex-1 justify-start mt-12 items-center">
