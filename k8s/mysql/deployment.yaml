@@ -36,6 +36,18 @@ spec:
               mountPath: /docker-entrypoint-initdb.d
             - name: db-data
               mountPath: /var/lib/mysql
+          livenessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            periodSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: 3306
+            periodSeconds: 3
+            failureThreshold: 5
+            successThreshold: 1
 
       restartPolicy: Always
   selector:

@@ -2,7 +2,6 @@ import {signIn, signOut, useSession} from "next-auth/react";
 import Link from "next/link";
 
 import {useEffect, useState} from "react";
-import {useRouter} from "next/router";
 // @ts-ignore
 import {GetServerSideProps} from "next";
 import {useUserStore} from "../utils/stores";
@@ -89,7 +88,6 @@ function AccountComponent({
 
 export default function AppHeaderComponent({csrfToken}) {
     const session = useSession();
-    const router = useRouter();
 
     const [theme, setTheme] = useState("dark");
 

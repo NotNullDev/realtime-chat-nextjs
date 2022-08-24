@@ -10,7 +10,12 @@ export const getCurrentPusherInstance = () => {
     if (!pusher) {
         Pusher.logToConsole = false;
         pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY || "", {
+            httpHost: process.env.NEXT_PUBLIC_PUSHER_HOST || "",
+            wsHost: process.env.NEXT_PUBLIC_PUSHER_HOST || "",
+            statsHost: process.env.NEXT_PUBLIC_PUSHER_HOST || "",
+            httpPort: parseInt(process.env.NEXT_PUBLIC_PUSHER_PORT ?? "3000"),
             cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "eu",
+            forceTLS: false
         })
     }
 

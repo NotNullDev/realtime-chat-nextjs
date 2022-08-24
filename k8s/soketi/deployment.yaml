@@ -27,6 +27,13 @@ spec:
             - secretRef:
                 name: soketi-secret
                 optional: false
+          livenessProbe:
+            httpGet:
+              port: 9601
+              path: "/metrics"
+            periodSeconds: 5
+            failureThreshold: 4
+
       restartPolicy: Always
   selector:
     matchLabels:
