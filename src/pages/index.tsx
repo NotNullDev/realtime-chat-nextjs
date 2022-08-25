@@ -4,7 +4,6 @@ import {RightSideBar} from "../components/rightSideBar";
 import {trpc} from "../utils/trpc";
 import {ChatRoom} from "../types/prisma";
 import {useSession} from "next-auth/react";
-import {useRouter} from "next/router";
 import {usePathManager} from "../utils/hooks";
 
 export interface ActiveChannel {
@@ -113,7 +112,6 @@ function CreateRoomModalBody({}) {
     const setCurrentRoom = useRoomStore(state => state.setCurrentRoom);
     const createRoomMutation = trpc.useMutation(["chatMessagesRouter.createRoom"])
     const queryClient = trpc.useContext();
-    const router = useRouter();
 
     const roomManager = usePathManager();
 
@@ -130,7 +128,7 @@ function CreateRoomModalBody({}) {
         // create regex that passes alfabetic characters and following signs: _ - = @ , . ;
         const roomNameRegex = /^[a-zA-Z0-9_\-=@,.;]+$/;
 
-        if (!roomName.current.match(roomNameRegex)) {
+        if (!roomName.current.match(roomNameRegex) || roomName.current.startsWith("private-")) {
             console.log("Invalid room name");
             return;
         }
@@ -398,6 +396,13 @@ export default function Index() {
         if (!user) {
             return <div>Loading...</div>;
         }
+
+        if (!currentUser && user) {
+            setCurrentUser({
+                ...user
+            })
+        }
+
     }
 
     if (allRoomsQuery.status === "loading") {

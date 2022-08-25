@@ -4,8 +4,10 @@ import {SyncedMessage} from "../components/ChatComponent";
 import {ChatRoom} from "../types/prisma";
 import Pusher, {Channel} from "pusher-js";
 
+let pusher : Pusher | undefined= undefined;
+
 export const getCurrentPusherInstance = () => {
-    let pusher = Pusher.instances[0];
+    pusher = Pusher.instances[0];
 
     if (!pusher) {
         Pusher.logToConsole = false;
@@ -14,8 +16,12 @@ export const getCurrentPusherInstance = () => {
             wsHost: process.env.NEXT_PUBLIC_PUSHER_HOST || "",
             statsHost: process.env.NEXT_PUBLIC_PUSHER_HOST || "",
             httpPort: parseInt(process.env.NEXT_PUBLIC_PUSHER_PORT ?? "3000"),
+            wsPort: parseInt(process.env.NEXT_PUBLIC_PUSHER_PORT ?? "3000"),
+            wssPort: parseInt(process.env.NEXT_PUBLIC_PUSHER_PORT ?? "3000"),
             cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "eu",
-            forceTLS: false
+            forceTLS: false,
+            ignoreNullOrigin: true,
+            enabledTransports: ['ws', 'wss'],
         })
     }
 

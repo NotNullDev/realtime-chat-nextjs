@@ -217,7 +217,9 @@ export const chatMessagesRouter = createRouter()
                     }
                 },
                 where: {
-                    isPrivate: false
+                    isPrivate: {
+                        equals: false
+                    }
                 }
             });
 

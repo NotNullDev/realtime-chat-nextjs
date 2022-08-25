@@ -9,12 +9,10 @@ spec:
     - name: api
       port: 6001
       targetPort: 6001
-      nodePort: 30000
 
     - name: metrics
       port: 9601
       targetPort: 9601
-      nodePort: 30001
 
 
   type: LoadBalancer
