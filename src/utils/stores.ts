@@ -4,6 +4,8 @@ import {SyncedMessage} from "../components/ChatComponent";
 import {ChatRoom} from "../types/prisma";
 import Pusher, {Channel} from "pusher-js";
 
+import  { NEW_MESSAGE_CHANNEL } from "../utils/consts.json"
+
 let pusher : Pusher | undefined= undefined;
 
 export const getCurrentPusherInstance = () => {
@@ -81,6 +83,65 @@ const aa = () => {
     console.error("wtf!???");
 }
 
+interface RoomState {
+    currentRoomName: string | undefined;
+    currentChannel: Channel | undefined;
+    setCurrentChannel: (roomName: string, callback: (data) => void) => boolean;
+    unsetCurrentRoom: (roomName: string) => boolean;
+}
+
+export const useRoomStateStore = create<RoomState>()((set) => ({
+
+    currentRoomName: undefined,
+
+    currentChannel: undefined,
+
+    setCurrentChannel: (roomName: string, callback: (data) => void) => {
+        set(state => {
+            if (state.currentChannel) {
+                console.log("Warning: trying to set current channel while another channel is already set. Please unsubscribe first.");
+                throw new Error("Warning: trying to set current channel while another channel is already set. Please unsubscribe first.");
+                return {
+                    ...state
+                }
+            }
+
+            const channel = getCurrentPusherInstance()
+                .subscribe(roomName);
+
+            channel.bind(NEW_MESSAGE_CHANNEL, (data) => {
+                console.log("RECEIVED FROM WEBSOCKET SERVER: ", data);
+                callback(data);
+            });
+
+            console.log("Subscribed to channel: ", channel);
+
+            return {
+                ...state,
+                currentChannel: channel,
+            };
+        })
+
+        return true;
+    },
+
+    unsetCurrentRoom: (roomName: string) => {
+        set((state) => {
+            if (state.currentChannel) {
+                state.currentChannel.unbind_all();
+            }
+
+            return {
+                ...state,
+                currentChannel: undefined
+            }
+        })
+
+        return true;
+    }
+
+}));
+
 export const useRoomStore = create<RoomStore>()((set) => ({
     currentRoom: undefined,
     currentRoomMessages: [],
@@ -125,59 +186,9 @@ export const useRoomStore = create<RoomStore>()((set) => ({
     setCurrentRoom: (newRoom: ChatRoom) => {
         set((state) => {
 
-                if (!newRoom) {
-                    console.error("Treind to add non-existing room");
-                    return {
-                        ...state
-                    };
-                }
-
-                if (state.channel) {
-                    state.channel.unbind_all();
-                    state.channel.unsubscribe();
-                    console.log("Unsubscribed from channel " + state.channel.name);
-                }
-
-                const pusher = getCurrentPusherInstance();
-
-                if (!pusher) {
-                    throw new Error("Pusher can not be initialized!");
-                }
-
-                let channelName = newRoom.name;
-
-                if (newRoom.isPrivate) {
-                    channelName = "private-" + channelName;
-                }
-
-                let channel = pusher.channel(channelName)
-
-                if (!channel) {
-                    channel = pusher.subscribe(channelName);
-                }
-
-                channel.unbind("new-message");
-
-                channel.bind("new-message", (msg) => {
-                    useRoomStore.getState().addRawMessage(msg);
-                });
-
-                console.log("Subscribed to channel " + channel.name);
-
-                let syncedMessages = newRoom.messages.map(msg => {
-                    return {
-                        ...msg,
-                        isSynced: true
-                    } as SyncedMessage;
-                })
-
-                syncedMessages = syncedMessages.reverse();
-
                 return {
                     ...state,
                     currentRoom: newRoom,
-                    channel,
-                    currentRoomMessages: syncedMessages
                 };
             }
         );

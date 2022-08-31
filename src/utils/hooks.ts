@@ -12,7 +12,10 @@ export function usePathManager() {
         setCurrentRoom(room);
 
         await router.push({
-            pathname: roomPageEndpoint
+            pathname: roomPageEndpoint,
+            query: {
+                data: JSON.stringify(room),
+            }
         }, roomPageEndpoint);
     }
 

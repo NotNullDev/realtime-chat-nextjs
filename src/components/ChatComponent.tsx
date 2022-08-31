@@ -1,51 +1,39 @@
 import {useEffect, useRef, useState} from "react";
-import {MessageWithAuthor} from "../types/prisma";
-import {trpc} from "../utils/trpc";
+import {ChatRoom, MessageWithAuthor} from "../types/prisma";
 import {useSession} from "next-auth/react";
-import {AppRouter} from "../server/router";
 import SingleMessage from "./SingleMessage";
-import {useRoomStore} from "../utils/stores";
+import {getCurrentPusherInstance, useRoomStateStore} from "../utils/stores";
 import ErrorMessages from "../utils/errorMessages.json";
 import {v4 as uuid} from "uuid";
-import {TRPCClientError} from "@trpc/client";
 import {usePathManager} from "../utils/hooks";
+import {useRouter} from "next/router";
+import {useMutation} from "@tanstack/react-query";
+import {Message} from "@prisma/client";
 
 export type SyncedMessage = MessageWithAuthor & {
     isSynced: boolean;
     roomId: BigInt;
-    room: never;
 };
-
-
 
 type ChatMessageResponse = {
     messages: MessageWithAuthor[];
     cursor: string;
 };
 
-const fetchMessages = async ({queryKey}) => {
-    const cursor = queryKey[1];
+const addMessageQuery = async ({
+                                   message
+                               }: { message: Message }) => {
+    const resp = await fetch(`/api/addMessage`, {
+        method: "POST",
+        body: JSON.stringify(message)
+    })
 
-    if (typeof cursor !== "number") {
-        console.error(cursor);
-        throw new Error("OMG I NEED NUMBER NOT SOME #@!");
-    }
+    return await resp.json();
+}
 
-    const uri = `/api/getMessages?cursor=${cursor}`;
-
-    const resp = await fetch(uri);
-
-    const messages = await resp.json();
-
-    return messages as ChatMessageResponse;
-};
-
-export function ChatComponent() {
+export function ChatComponent({room}: { room: ChatRoom }) {
     const [validationErrorMessage, setValidationErrorMessage] = useState<string>("");
-
-    const room = useRoomStore(state => state.currentRoom);
-    const messages = useRoomStore(state => state.currentRoomMessages);
-    const addMessage = useRoomStore(state => state.addRawMessage);
+    const [chatMessages, setChatMessages] = useState<SyncedMessage[]>([]);
 
     const pathManager = usePathManager();
 
@@ -54,21 +42,44 @@ export function ChatComponent() {
     const msgBox = useRef<HTMLDivElement>(null);
     const textArea = useRef<HTMLTextAreaElement>(null);
 
+    const router = useRouter();
+
+    const currentChannel = useRoomStateStore(state => state.currentChannel);
+
     useEffect(() => {
+
+        if (!room) {
+            router.push("/");
+            return;
+        }
+
         document.addEventListener("keydown", (e) => {
             if (document.activeElement !== textArea.current && e.key === "/") {
                 textArea.current?.focus();
                 e.preventDefault();
             }
         });
+
+        useRoomStateStore.getState().setCurrentChannel(room.name, (data) => {
+            console.log(":): ", data);
+        })
+
+        return () => {
+            const pusher = getCurrentPusherInstance();
+            useRoomStateStore.getState().unsetCurrentRoom(room.name);
+            pusher.unsubscribe(room.name);
+            console.log("unsubscribed from channel", room.name);
+        };
     }, []);
 
-    const messageMutation = trpc.useMutation("chatMessagesRouter.addMessage");
+    const messageMutation = useMutation(["addMessage"], addMessageQuery);
 
-    // HOOKS END
+    const addMessage = (message: SyncedMessage) => {
+        message.isSynced = false;
+        setChatMessages((prev) => [...prev, message]);
+    }
 
     console.log("ChatComponent re-rendered.")
-    console.log((messages[0]?.id));
 
     if (!room) { // if error will occur try this: return redirecting, and check in useState if there is room, if not, then redirect
         pathManager.pushToLogin();
@@ -77,11 +88,9 @@ export function ChatComponent() {
 
     const messageTextChangeHandler = (e: any) => {
         if (e.key.toLowerCase() !== "enter") {
-
             if (validationErrorMessage !== "") {
                 setValidationErrorMessage("");
             }
-
             return;
         }
 
@@ -111,22 +120,29 @@ export function ChatComponent() {
             } as SyncedMessage;
 
             e.target.value = "";
-            addMessage(message, false);
+            addMessage(message);
 
             try {
                 messageMutation.mutateAsync({
-                    ...message,
-                    roomId: message.roomId.toString()
+                    message: {
+                        ...message,
+                        roomId: message.roomId
+                    }
                 }, {
                     onSuccess: () => {
                         console.log("Message sent!");
                     },
                     onError: (error) => {
-                        let errorMessages = JSON.parse(error.message) as TRPCClientError<AppRouter>[];
+                        // let errorMessages = JSON.parse(error.message) as TRPCClientError<AppRouter>[];
+                        //
+                        // let errorMessage = errorMessages.reduce((acc, error) => acc + error.message + ", ", "");
+                        //
+                        // errorMessage = errorMessage.substring(0, errorMessage.length - 2);
 
-                        let errorMessage = errorMessages.reduce((acc, error) => acc + error.message + ", ", "");
+                        console.error(error);
 
-                        errorMessage = errorMessage.substring(0, errorMessage.length - 2);
+                        const errorMessage = error.toString();
+
                         setValidationErrorMessage(errorMessage);
                     }
                 }).catch(e => {
@@ -145,7 +161,7 @@ export function ChatComponent() {
     const inputErrorStyle = validationErrorMessage !== "" ? `input-error` : ``;
     let inputErrorMessageStyle = validationErrorMessage === "" ? `hidden` : ``;
 
-    if (!messages) {
+    if (!chatMessages) {
         console.error("Error receiving messages.");
     }
 
@@ -158,12 +174,12 @@ export function ChatComponent() {
                 >
                     <div ref={msgBox}></div>
                     {/* TODO: change mechanism for auto scrolling - current contains bugs*/}
-                    {messages?.length == 0 ? (
+                    {chatMessages?.length == 0 ? (
                         <div className="grid place-items-center w-full h-full">
                             <p className="">No messages to show</p>
                         </div>
                     ) : (
-                        messages.map((message) => (
+                        chatMessages.map((message) => (
                             <SingleMessage
                                 message={message}
                                 currentUser={session?.user}

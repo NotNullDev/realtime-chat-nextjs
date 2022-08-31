@@ -21,7 +21,6 @@ const formatErrors = (
 if (!env.success) {
   console.error(
     "❌ Invalid environment variables:\n",
-    ...formatErrors(env.error.format()),
   );
   process.exit(1);
 }

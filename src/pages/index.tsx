@@ -1,10 +1,10 @@
 import {useEffect, useRef, useState} from "react";
 import {useRoomStore, useUserStore,} from "../utils/stores";
 import {RightSideBar} from "../components/rightSideBar";
-import {trpc} from "../utils/trpc";
 import {ChatRoom} from "../types/prisma";
 import {useSession} from "next-auth/react";
 import {usePathManager} from "../utils/hooks";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 
 export interface ActiveChannel {
     channelName: string;
@@ -18,7 +18,6 @@ export const SinglePublicChannelPreview = ({
     channelName: string;
     room: ChatRoom
 }) => {
-
     const roomManager = usePathManager();
 
     const join = async () => {
@@ -106,12 +105,43 @@ function JoinRoomModalBody() {
     );
 }
 
+const getChannels = async () => {
+    const channelsPromise = await fetch("http://localhost:3000/api/getChannels", {
+
+        method: "GET",
+    });
+    return channelsPromise;
+}
+
+const createRoomQuery = async ({ownerId, roomName, isPrivate}: {ownerId: string, roomName: string, isPrivate: boolean}) => {
+    const createRoomPromise = await fetch("http://localhost:3000/api/createRoom", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            ownerId,
+            roomName,
+            isPrivate
+        })
+    });
+
+    return createRoomPromise.json();
+}
+
 function CreateRoomModalBody({}) {
     const [currentRoomName, setCurrentRoomName] = useState<string>("");
     const [isPrivate, setIsPrivate] = useState<boolean>(false);
-    const setCurrentRoom = useRoomStore(state => state.setCurrentRoom);
-    const createRoomMutation = trpc.useMutation(["chatMessagesRouter.createRoom"])
-    const queryClient = trpc.useContext();
+    const queryClient = useQueryClient();
+
+    const createRoomMutation =  useMutation(["createRoom"], createRoomQuery, {
+        onSuccess: data => {
+            console.log("Create room success", data);
+        },
+        onError: err => {
+            console.error("Something went wrong", err);
+        }
+    });
 
     const roomManager = usePathManager();
 
@@ -139,8 +169,8 @@ function CreateRoomModalBody({}) {
             isPrivate: isPrivate
         }, {
             onSuccess: async (data) => {
+                console.log("Create room success", data);
                 data = data as ChatRoom;
-                setCurrentRoom(data);
                 await queryClient.invalidateQueries(["chatMessagesRouter.getAllRooms"]);
                 await roomManager.pushToRoom(data as ChatRoom);
             },
@@ -224,7 +254,6 @@ function ChangeNameModalBody({username, setUsername}) {
     );
 }
 
-
 const ButtonGroup = ({
                          activeChannels,
                          username,
@@ -239,7 +268,9 @@ const ButtonGroup = ({
     const roomManager = usePathManager();
 
     const [tempUsername, setTempUsername] = useState(username);
-    const randomRoom = trpc.useQuery(["chatMessagesRouter.getRandomRoom"]);
+    const randomRoom = useQuery(["getRandomRoom"], getRandomRoomQuery);
+
+    const currentRoomName = useRef<string>("");
 
     const onKeyDownListener = (e) => {
         if (e.key === "Escape" && toggleElement.current) {
@@ -359,12 +390,22 @@ const ButtonGroup = ({
         ;
 };
 
+const getRandomRoomQuery = async () => {
+    const response = await fetch("/api/getRandomRoom");
+    return await response.json() as ChatRoom;
+}
+
+const getAllRoomsQuery = async () => {
+    const response = await fetch("api/getAllRooms");
+
+    return await response.json();
+}
+
 export default function Index() {
     const session = useSession();
 
-    const allRoomsQuery = trpc.useQuery(["chatMessagesRouter.getAllRooms"])
+    const allRoomsQuery = useQuery(["getAllRooms"], getAllRoomsQuery)
 
-    const setCurrentRoom = useRoomStore((store) => store.setCurrentRoom);
     const currentUser = useUserStore((state) => state.user);
     const setCurrentUser = useUserStore((state) => state.setUser);
 
@@ -375,7 +416,7 @@ export default function Index() {
         };
     });
 
-    trpc.useQuery(["chatMessagesRouter.getRandomRoom"]);
+    const randomRoomQuery = useQuery(["chatMessagesRouter.getRandomRoom"], getRandomRoomQuery);
 
     useEffect(() => {
         const userNow = session?.data?.user;
@@ -390,19 +431,11 @@ export default function Index() {
     // HOOKS END
 
     if (!currentUser && session && session.status != "loading" && session.status == "authenticated") {
-
         const user = session.data?.user;
 
         if (!user) {
             return <div>Loading...</div>;
         }
-
-        if (!currentUser && user) {
-            setCurrentUser({
-                ...user
-            })
-        }
-
     }
 
     if (allRoomsQuery.status === "loading") {
