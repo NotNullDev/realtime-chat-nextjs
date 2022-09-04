@@ -1,7 +1,7 @@
 // src/pages/api/examples.ts
 import type {NextApiRequest, NextApiResponse} from "next";
-import {prisma} from "../../server/prisma";
 import {MessageWithAuthor} from "../../types/prisma";
+import { prisma } from "../../server/prisma";
 
 (BigInt.prototype as any).toJSON = function () {
   return this.toString();

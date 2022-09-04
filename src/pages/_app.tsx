@@ -6,6 +6,7 @@ import AppHeader from "../components/AppHeader";
 import {GetServerSideProps} from "next";
 import {QueryClientProvider, useQueryClient} from "@tanstack/react-query";
 import queryClient from "../utils/queryClient";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
 // @ts-ignore
 BigInt.prototype.toJSON = function () {
@@ -18,17 +19,15 @@ export let numberOfRenders = 0;
 numberOfRenders++;
 
 const MyApp: AppType = ({Component, pageProps}) => {
-
     return (
         <QueryClientProvider client={queryClient}>
             <SessionProvider session={pageProps.session} refetchInterval={0}>
                 <div className="w-full mx-auto flex flex-col min-h-screen">
                     <AppHeader csrfToken={pageProps.csrfToken}/>
                     <Component {...pageProps} />
-                    {/*<AppFooter />*/}
                 </div>
-                {/*<ReactQueryDevtools initialIsOpen={true} position="bottom-left" />*/}
             </SessionProvider>
+            <ReactQueryDevtools initialIsOpen={false} position="bottom-left" />
         </QueryClientProvider>
     );
 };
@@ -43,9 +42,9 @@ export const getBaseUrl = () => {
     return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
 };
 
+// @ts-ignore
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const csrfToken = await getCsrfToken();
-
     return {
         props: {
             csrfToken,

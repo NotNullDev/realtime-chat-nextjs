@@ -1,16 +1,9 @@
-import {
-  DefaultSession,
-  NextAuthOptions,
-  unstable_getServerSession,
-} from "next-auth";
-import { getProviders } from "next-auth/react";
 // @ts-ignore
-import { GetServerSideProps } from "next";
-import { authOptions } from "./api/auth/[...nextauth]";
+import {GetServerSideProps} from "next";
 
 
 export function SingInPage() {
-  return <div>hello</div>;
+    return <div>hello</div>;
 }
 
 // export function SignIn({

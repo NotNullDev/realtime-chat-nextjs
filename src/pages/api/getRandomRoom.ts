@@ -1,37 +1,37 @@
 import {NextApiRequest, NextApiResponse} from "next";
+import { prisma } from "../../server/prisma";
 
 export default async (req: NextApiRequest,res: NextApiResponse) => {
-
-    let randomRoom : undefined | any = undefined;
-    let rand = 0;
     try {
         const count = await prisma?.room.count();
 
         console.log("Count of rooms: ", count);
 
         if (!count) {
-            return res.status(500);
+            console.error("No rooms found! Count is 0");
+            return res.status(404).send("");
         }
 
-        rand = 1 + Math.floor(Math.random() * count);
+        const rand = 1 + Math.floor(Math.random() * count);
 
         console.log("Random room index: ", rand);
 
-        randomRoom = await prisma?.room.findFirst({
+        const randomRoom = await prisma?.room.findFirst({
             where: {
                 id: rand
             }
-        })
+            })
+
+        console.log("Random room: ", randomRoom);
+
+        if (!randomRoom) {
+            console.error("No random room found, rand: ", rand);
+            return res.status(500).json({error: "No room found"});
+        }
+
+        return res.status(200).json(randomRoom);
     } catch (e) {
-        return res.status(500).json({error: e.message});
+        console.error(e);
     }
-
-    console.log("Random room: ", randomRoom);
-
-    if (!randomRoom) {
-        console.error("No random room found, rand: ", rand);
-        return res.status(500).json({error:"No room found"});
-    }
-
-    return res.status(200).json(randomRoom);
+    return res.status(500).send("");
 }

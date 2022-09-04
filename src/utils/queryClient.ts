@@ -1,3 +1,5 @@
 import {QueryClient} from "@tanstack/query-core";
 
-export default new QueryClient();
+const queryClient = new QueryClient();
+
+export default queryClient;

@@ -1,13 +1,23 @@
 import {useRef} from "react";
-import {SinglePublicChannelPreview} from "../pages";
-import {ChatRoom} from "../types/prisma";
+import {RoomCard} from "./roomCard";
+import {useQuery} from "@tanstack/react-query";
+import {getAllRoomsQuery} from "../lib/ApiCalls";
 
-export const RightSideBar = ({activeChannels}: { activeChannels: ChatRoom[] }) => {
+export const RoomsList = () => {
+    const allRoomsQuery = useQuery(["getAllRooms"], getAllRoomsQuery)
 
     const searchBarRef = useRef<HTMLInputElement>(null);
 
     const toggleSearchBar = () => {
         searchBarRef.current?.classList.toggle("hidden");
+    }
+
+    if (allRoomsQuery.status === "loading") {
+        return <div>Loading...</div>
+    }
+
+    if (allRoomsQuery.status === "error") {
+        return <div>ERROR: could not fetch available rooms.</div>
     }
 
     return (
@@ -38,9 +48,9 @@ export const RightSideBar = ({activeChannels}: { activeChannels: ChatRoom[] }) =
 
             <div className="flex flex-wrap items-center justify-center min-w-[320px]">
                 {
-                    activeChannels.map((activeChannel, index) => {
-                        return (<SinglePublicChannelPreview key={index} channelName={activeChannel.name}
-                                                           room={activeChannel}
+                    allRoomsQuery.data.map((activeChannel, index) => {
+                        return (<RoomCard key={index} channelName={activeChannel.name}
+                                          room={activeChannel}
                         />);
                     })
                 }

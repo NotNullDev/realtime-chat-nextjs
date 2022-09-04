@@ -1,6 +1,7 @@
 import {NextApiRequest, NextApiResponse} from "next";
 import pusher from "../../server/pusher";
 import {Message} from "@prisma/client";
+import {prisma} from "../../server/prisma";
 
 const addMessage = async (req: NextApiRequest, res: NextApiResponse) => {
     const newMessage: Message =  req.body;
