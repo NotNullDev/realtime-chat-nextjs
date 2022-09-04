@@ -1,7 +1,7 @@
 import CenterComponent from "../components/Center";
 
 export const ErrorPage = () => {
-    return <CenterComponent style="font-bold text-4xl">
+    return <CenterComponent className="font-bold text-4xl">
 
         <div className="flex flex-col justify-center items-center">
             <div className="mb-3">404</div>

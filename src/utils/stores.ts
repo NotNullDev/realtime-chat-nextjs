@@ -4,7 +4,7 @@ import {SyncedMessage} from "../components/ChatComponent";
 import {ChatRoom} from "../types/prisma";
 import Pusher, {Channel} from "pusher-js";
 
-import  { NEW_MESSAGE_CHANNEL } from "../utils/consts.json"
+import CONST_VALUES from "../utils/consts.json"
 
 let pusher : Pusher | undefined= undefined;
 
@@ -109,7 +109,7 @@ export const useRoomStateStore = create<RoomState>()((set) => ({
             const channel = getCurrentPusherInstance()
                 .subscribe(roomName);
 
-            channel.bind(NEW_MESSAGE_CHANNEL, (data) => {
+            channel.bind(CONST_VALUES.NEW_MESSAGE_CHANNEL, (data) => {
                 console.log("RECEIVED FROM WEBSOCKET SERVER: ", data);
                 callback(data);
             });

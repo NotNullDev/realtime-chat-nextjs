@@ -8,17 +8,17 @@ body,
     min-height: 100vh;
 }
 
-::-webkit-scrollbar {
-    @apply bg-base-200;
-    @apply rounded-xl;
-}
-::-webkit-scrollbar-thumb {
-    @apply bg-accent;
-    @apply rounded-xl;
-}
-::-webkit-scrollbar {
-    @apply w-2;
-}
+/*::-webkit-scrollbar {*/
+/*    @apply bg-base-200;*/
+/*    @apply rounded-xl;*/
+/*}*/
+/*::-webkit-scrollbar-thumb {*/
+/*    @apply bg-accent;*/
+/*    @apply rounded-xl;*/
+/*}*/
+/*::-webkit-scrollbar {*/
+/*    @apply w-2;*/
+/*}*/
 /** {*/
 /*    border: 1px solid black;*/
 /*}*/

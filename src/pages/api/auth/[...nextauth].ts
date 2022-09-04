@@ -22,8 +22,8 @@ export const authOptions: NextAuthOptions = {
     colorScheme: "auto",
   },
   pages: {
-    // signIn: "/hello",
-    // error: "/error",
+    signIn: "/login",
+    error: "/error",
     // signOut: "/signOut",
     // newUser: "/newUser",
     // verifyRequest: "/verifyRequest",
@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
       };
 
       return session;
-    },
+    }
   },
 };
 

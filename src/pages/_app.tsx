@@ -1,11 +1,14 @@
 import type {AppType} from "next/dist/shared/lib/utils";
 import "../styles/globals.css";
 import {getCsrfToken, SessionProvider} from "next-auth/react";
-import AppHeader from "../components/AppHeader";
 // @ts-ignore
 import {GetServerSideProps} from "next";
-import {QueryClientProvider, useQueryClient} from "@tanstack/react-query";
 import queryClient from "../utils/queryClient";
+
+import {QueryClientProvider} from "@tanstack/react-query";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import {MantineProvider} from "@mantine/core";
+import HeaderResponsive from "../components/MantineHeader";
 
 // @ts-ignore
 BigInt.prototype.toJSON = function () {
@@ -17,19 +20,32 @@ export let appWs: WebSocket | null = null;
 export let numberOfRenders = 0;
 numberOfRenders++;
 
-const MyApp: AppType = ({Component, pageProps}) => {
+const providersWrapper = ({children}) => {
+    return <></>
+}
 
+const MyApp: AppType = ({Component, pageProps}) => {
     return (
-        <QueryClientProvider client={queryClient}>
-            <SessionProvider session={pageProps.session} refetchInterval={0}>
-                <div className="w-full mx-auto flex flex-col min-h-screen">
-                    <AppHeader csrfToken={pageProps.csrfToken}/>
-                    <Component {...pageProps} />
-                    {/*<AppFooter />*/}
-                </div>
-                {/*<ReactQueryDevtools initialIsOpen={true} position="bottom-left" />*/}
-            </SessionProvider>
-        </QueryClientProvider>
+        <MantineProvider theme={{colorScheme: 'dark'}} withGlobalStyles withNormalizeCSS>
+            <QueryClientProvider client={queryClient}>
+                <SessionProvider session={pageProps.session} refetchInterval={0}>
+                    <div className="w-full mx-auto flex flex-col min-h-screen">
+                        {/*<AppHeader csrfToken={pageProps.csrfToken}/>*/}
+                        <HeaderResponsive links={[
+                            {label: "Home", link: "/"},
+                            {label: "Rooms", link: "/rooms"},
+                            {label: "Login", link: "/login"},
+                            {label: "Register", link: "/register"},
+                        ]}/>
+                        <div className="flex-1 p-4">
+                            <Component {...pageProps} />
+                        </div>
+                        {/*<AppFooter />*/}
+                    </div>
+                    <ReactQueryDevtools initialIsOpen={true} position="bottom-left"/>
+                </SessionProvider>
+            </QueryClientProvider>
+        </MantineProvider>
     );
 };
 

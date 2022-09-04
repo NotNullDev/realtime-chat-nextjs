@@ -1,5 +1,5 @@
 import {useRef} from "react";
-import {SinglePublicChannelPreview} from "../pages";
+import {SinglePublicChannelPreview} from "../pages/index_old";
 import {ChatRoom} from "../types/prisma";
 
 export const RightSideBar = ({activeChannels}: { activeChannels: ChatRoom[] }) => {
