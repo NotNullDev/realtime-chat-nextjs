@@ -1,8 +1,10 @@
 import {useRef, useState} from "react";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {usePathManager} from "../utils/hooks";
-import {useUserStore} from "../utils/stores";
 import {ChatRoom} from "../types/prisma";
+import {session} from "next-auth/core/routes";
+import {useSession} from "next-auth/react";
+import {RandomRoomResponse} from "../types/appTypes";
 
 export function JoinRoomModalBody() {
     const [currentSecretKey, setCurrentSecretKey] = useState<string>("");
@@ -63,13 +65,14 @@ const createRoomQuery = async ({
         })
     });
 
-    return createRoomPromise.json();
+    return await createRoomPromise.json() as RandomRoomResponse;
 }
 
 export function CreateRoomModalBody({}) {
     const [currentRoomName, setCurrentRoomName] = useState<string>("");
     const [isPrivate, setIsPrivate] = useState<boolean>(false);
     const queryClient = useQueryClient();
+    const {data: session, status } = useSession();
 
     const createRoomMutation = useMutation(["createRoom"], createRoomQuery, {
         onSuccess: data => {
@@ -84,11 +87,9 @@ export function CreateRoomModalBody({}) {
 
     const roomName = useRef("");
 
-    let currentUser = useUserStore((state) => state.user);
-
     const createRoom = () => {
-        if (!currentUser) {
-            alert("Current user is not defined.")
+        if (!session.user) {
+            console.error("Current user is not authenticated!");
             return;
         }
 
@@ -96,21 +97,28 @@ export function CreateRoomModalBody({}) {
         const roomNameRegex = /^[a-zA-Z0-9_\-=@,.;]+$/;
 
         if (!roomName.current.match(roomNameRegex) || roomName.current.startsWith("private-")) {
-            console.log("Invalid room name");
+            console.log("Invalid room name", roomName.current);
             return;
         }
 
         createRoomMutation.mutate({
-            ownerId: currentUser.id,
+            ownerId: session.user.id,
             roomName: roomName.current,
             isPrivate: isPrivate
         }, {
             onSuccess: async (data) => {
                 console.log("Create room success", data);
-                data = data as ChatRoom;
+
+                if (data.error) {
+                    console.error("OMG SOMETHING IS REALY OFF");
+                    return;
+                }
                 await queryClient.invalidateQueries(["chatMessagesRouter.getAllRooms"]);
-                await roomManager.pushToRoom(data as ChatRoom);
+                await roomManager.pushToRoom(data.room as ChatRoom);
             },
+            onError: err => {
+                console.error("Something went wrong", err);
+            }
         });
     };
 
@@ -159,8 +167,12 @@ export function CreateRoomModalBody({}) {
     );
 }
 
-export function ChangeNameModalBody({username, setUsername}) {
+export function ChangeNameModalBody() {
     const inputRef = useRef<HTMLInputElement>(null);
+
+    const setUsername = (anyVal: any) => {
+        alert("Not implemented yet");
+    };
 
     return (
         <>

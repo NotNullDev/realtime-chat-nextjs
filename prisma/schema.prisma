@@ -118,3 +118,12 @@ model Room {
 
   @@index([name])
 }
+
+model UserRoomAuthReq {
+  id BigInt @id @unique @default(autoincrement())
+  roomId BigInt
+  userId String @db.VarChar(384)
+  secret String @db.VarChar(384)
+  createdAt DateTime @default(now())
+  expireTime DateTime
+}

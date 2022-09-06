@@ -1,11 +1,19 @@
 import {User} from "@prisma/client";
 import {SyncedMessage} from "./ChatComponent";
+import {useSession} from "next-auth/react";
+import {useEffect} from "react";
+import {useRouter} from "next/router";
 
-const SingleMessage = ({message, currentUser}: { message: SyncedMessage, currentUser: User }) => {
+const SingleMessage = ({message}: { message: SyncedMessage }) => {
+    const session = useSession();
+    const router = useRouter();
 
-    if (!currentUser) {
-        return null;
-    }
+
+    useEffect(() => {
+        if (session.status != "loading" && !session.data.user) {
+            alert("Hmm...")
+        }
+    }, [session])
 
     const createdAt = message.createdAt;
 
@@ -17,9 +25,9 @@ const SingleMessage = ({message, currentUser}: { message: SyncedMessage, current
         return <div>Error! Author is null. </div>
     }
 
-    const authorName = (message?.author?.name === currentUser.name ? "You" : message.author.name) ?? "Unknown";
+    const authorName = (message?.author?.name === session?.data.user.name ? "You" : message.author.name) ?? "Unknown";
 
-    const isOwnMessage = message.author.id === currentUser.id;
+    const isOwnMessage = message.author.id === session?.data.user.id;
 
     const additionalStyle = isOwnMessage ? "place-items-end" : "";
 

@@ -1,10 +1,9 @@
 import type {AppType} from "next/dist/shared/lib/utils";
 import "../styles/globals.css";
-import {getCsrfToken, SessionProvider} from "next-auth/react";
+import {getCsrfToken, SessionProvider, useSession} from "next-auth/react";
 import AppHeader from "../components/AppHeader";
-// @ts-ignore
 import {GetServerSideProps} from "next";
-import {QueryClientProvider, useQueryClient} from "@tanstack/react-query";
+import {QueryClientProvider} from "@tanstack/react-query";
 import queryClient from "../utils/queryClient";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
@@ -12,8 +11,6 @@ import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 BigInt.prototype.toJSON = function () {
     return this.toString()
 }
-
-export let appWs: WebSocket | null = null;
 
 export let numberOfRenders = 0;
 numberOfRenders++;
@@ -27,7 +24,7 @@ const MyApp: AppType = ({Component, pageProps}) => {
                     <Component {...pageProps} />
                 </div>
             </SessionProvider>
-            <ReactQueryDevtools initialIsOpen={false} position="bottom-left" />
+            <ReactQueryDevtools initialIsOpen={false} position="bottom-left"/>
         </QueryClientProvider>
     );
 };
@@ -42,7 +39,6 @@ export const getBaseUrl = () => {
     return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
 };
 
-// @ts-ignore
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const csrfToken = await getCsrfToken();
     return {

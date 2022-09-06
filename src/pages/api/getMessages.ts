@@ -8,15 +8,8 @@ import { prisma } from "../../server/prisma";
 };
 
 const examples = async (req: NextApiRequest, res: NextApiResponse) => {
-  const cursor = req.query.cursor;
 
   let messages: MessageWithAuthor[] | undefined;
-
-  if (!cursor) {
-    return res.status(400).json({
-      error: "Missing cursor",
-    });
-  }
 
   try {
     messages = await prisma.message.findMany({
@@ -41,7 +34,6 @@ const examples = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const response = {
     messages,
-    nextCursor: cursor ?? messages.length ?? 1,
   };
 
   res.status(200).json(response);

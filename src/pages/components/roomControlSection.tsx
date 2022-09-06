@@ -4,29 +4,16 @@ import {useEffect, useRef, useState} from "react";
 import {usePathManager} from "../../utils/hooks";
 import {useQuery} from "@tanstack/react-query";
 import {ChangeNameModalBody, CreateRoomModalBody, JoinRoomModalBody} from "../../components/modals";
+import {RandomRoomResponse} from "../../types/appTypes";
 
-export const RoomControlSection = ({
-                                       username,
-                                       setUsername,
-                                       session
-                                   }: { username: string, setUsername: (string) => void, session: ReturnType<typeof useSession> }) => {
+
+export const RoomControlSection = () => {
+    const {data: session, status} = useSession();
     const toggleElement = useRef<HTMLInputElement>(null);
-
-
     const [modalBody, setModalBody] = useState("changeName");
-
     const roomManager = usePathManager();
 
-    const randomRoom = useQuery(["getRandomRoom"], getRandomRoomQuery);
-
-    const onKeyDownListener = (e) => {
-        if (e.key === "Escape" && toggleElement.current) {
-            toggleElement.current.checked = false;
-        } else if (e.key === "Enter" && toggleElement.current) {
-            toggleElement.current.checked = false;
-            console.log("Created room");
-        }
-    };
+    const randomRoom = useQuery(["getRandomRoom"], getRandomRoomQuery, {});
 
     // Global key listeners
     useEffect(() => {
@@ -35,7 +22,17 @@ export const RoomControlSection = ({
         return () => {
             document.removeEventListener("keydown", onKeyDownListener);
         };
-    });
+    }, []);
+
+    // END HOOKS
+    const onKeyDownListener = (e) => {
+        if (e.key === "Escape" && toggleElement.current) {
+            toggleElement.current.checked = false;
+        } else if (e.key === "Enter" && toggleElement.current) {
+            toggleElement.current.checked = false;
+            console.log("Created room");
+        }
+    };
 
     const openModal = () => {
         if (toggleElement.current) {
@@ -60,21 +57,30 @@ export const RoomControlSection = ({
 
     const joinRandomRoom = async () => {
         if (randomRoom.status === "success" && randomRoom) {
-            await roomManager.pushToRoom(randomRoom.data);
+            await roomManager.pushToRoom(randomRoom.data.room);
         } else {
             alert("Error: randomRoom is null.");
         }
     };
 
-    const userInactiveClass = session?.data?.user ? `disabled` : ``;
+    if (status === "loading") {
+        return <div>Loading...</div>;
+    }
+
+    const userInactiveClass = session?.user ? `disabled` : ``;
+
+    let randomRoomNotExistClass = 'btn-disabled';
+
+    if (randomRoom.status === "success" && !randomRoom.data.error) {
+        randomRoomNotExistClass = '';
+    }
 
     return (
         <>
             <div className="flex mb-2">
         <span className="mr-2">
-          Your nickname: <strong>{username}</strong>
+          Your nickname: <strong>{session?.user.name ?? "IDK"}</strong>
         </span>
-
                 <button onClick={() => openChangeNameModal()}>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -94,14 +100,14 @@ export const RoomControlSection = ({
 
             <div className="flex">
                 <div className="flex">
-                    <div className="btn m-2" onClick={() => joinRandomRoom()}>
+                    <button className={`btn m-2 ${randomRoomNotExistClass}`} onClick={() => joinRandomRoom()}>
                         Join random room
-                    </div>
+                    </button>
                     <div className="btn m-2" onClick={() => openJoinModal()}>
                         Join private room
                     </div>
                     <button className={`btn m-2 modal-button ${userInactiveClass}`} onClick={() => openModal()}
-                            disabled={session.status !== "authenticated"}
+                            disabled={status !== "authenticated"}
                     >
                         Create new Room
                     </button>
@@ -119,10 +125,7 @@ export const RoomControlSection = ({
                         {modalBody === "join" && <JoinRoomModalBody/>}
                         {modalBody === "newRoom" && <CreateRoomModalBody/>}
                         {modalBody === "changeName" && (
-                            <ChangeNameModalBody
-                                username={username}
-                                setUsername={setUsername}
-                            />
+                            <ChangeNameModalBody/>
                         )}
                     </div>
                 </div>
@@ -134,5 +137,5 @@ export const RoomControlSection = ({
 };
 export const getRandomRoomQuery = async () => {
     const response = await fetch("/api/getRandomRoom");
-    return await response.json() as ChatRoom;
+    return await response.json() as RandomRoomResponse;
 }

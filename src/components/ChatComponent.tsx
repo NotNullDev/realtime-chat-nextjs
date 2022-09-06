@@ -9,15 +9,11 @@ import {usePathManager} from "../utils/hooks";
 import {useRouter} from "next/router";
 import {useMutation} from "@tanstack/react-query";
 import {Message} from "@prisma/client";
+import {ChatMessageResponse} from "../types/appTypes";
 
 export type SyncedMessage = MessageWithAuthor & {
     isSynced: boolean;
     roomId: BigInt;
-};
-
-type ChatMessageResponse = {
-    messages: MessageWithAuthor[];
-    cursor: string;
 };
 
 const addMessageQuery = async ({
@@ -28,7 +24,7 @@ const addMessageQuery = async ({
         body: JSON.stringify(message)
     })
 
-    return await resp.json();
+    return await resp.json() as ChatMessageResponse;
 }
 
 export function ChatComponent({room}: { room: ChatRoom }) {
@@ -47,7 +43,6 @@ export function ChatComponent({room}: { room: ChatRoom }) {
     const currentChannel = useRoomStateStore(state => state.currentChannel);
 
     useEffect(() => {
-
         if (!room) {
             router.push("/");
             return;
@@ -108,15 +103,10 @@ export function ChatComponent({room}: { room: ChatRoom }) {
             }
 
             const message = {
-                id: BigInt("-1"),
                 authorId: currentUserId,
                 content: e.target.value,
-                isSynced: false,
-                author: session.user,
-                createdAt: new Date(),
                 clientUUID: uuid(),
                 roomId: room.id,
-                room: room
             } as SyncedMessage;
 
             e.target.value = "";
@@ -182,7 +172,6 @@ export function ChatComponent({room}: { room: ChatRoom }) {
                         chatMessages.map((message) => (
                             <SingleMessage
                                 message={message}
-                                currentUser={session?.user}
                                 key={message.clientUUID}
                             />
                         ))

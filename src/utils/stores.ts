@@ -5,6 +5,7 @@ import {ChatRoom} from "../types/prisma";
 import Pusher, {Channel} from "pusher-js";
 
 import  CONST_MESSAGES from "../utils/consts.json"
+import {useSession} from "next-auth/react";
 
 let pusher : Pusher | undefined= undefined;
 
@@ -218,38 +219,49 @@ export const useThemeStore = create<ThemeStore>()((set) => ({
     }
 }));
 
-export interface AnonymousUser {
-    username: string;
-}
-
-export interface UserStore {
-    user: User | undefined;
-    anonymousUser: AnonymousUser;
-    setUser: (newUser: User) => void;
-    setAnonymousUser: (newAnonymousUser: AnonymousUser) => void;
-}
-
-export const useUserStore = create<UserStore>()((set) => ({
-    user: undefined,
-    anonymousUser: {
-        username: "RandomBalunga35"
-    },
-    setUser: (newUser: User) => {
-        set((state) => {
-                return {
-                    ...state,
-                    user: newUser,
-                };
-            }
-        );
-    },
-    setAnonymousUser: (newAnonymousUser: AnonymousUser) => {
-        set((state) => {
-                return {
-                    ...state,
-                    anonymousUser: newAnonymousUser,
-                };
-            }
-        );
-    }
-}));
+// export interface AnonymousUser {
+//     username: string;
+// }
+//
+// export interface UserStore {
+//     getUser : () => User | undefined;
+//     user: User | undefined;
+//     anonymousUser: AnonymousUser;
+//     setUser: (newUser: User) => void;
+//     setAnonymousUser: (newAnonymousUser: AnonymousUser) => void;
+// }
+//
+// const useCurrentUser = () => {
+//     const session = useSession();
+//     return {
+//         user: session.data.user,
+//     }
+// }
+//
+// export const useUserStore = create<UserStore>()((set) => ({
+//     getUser: () => {
+//         return undefined;
+//     },
+//     user: undefined,
+//     anonymousUser: {
+//         username: "RandomBalunga35"
+//     },
+//     setUser: (newUser: User) => {
+//         set((state) => {
+//                 return {
+//                     ...state,
+//                     user: newUser,
+//                 };
+//             }
+//         );
+//     },
+//     setAnonymousUser: (newAnonymousUser: AnonymousUser) => {
+//         set((state) => {
+//                 return {
+//                     ...state,
+//                     anonymousUser: newAnonymousUser,
+//                 };
+//             }
+//         );
+//     }
+// }));
